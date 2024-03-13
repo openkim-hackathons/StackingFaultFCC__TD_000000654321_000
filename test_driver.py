@@ -707,3 +707,9 @@ if __name__ == "__main__":
     atoms = bulk('Ag','fcc',a=4.089,cubic=True)
     test = TestDriver(model_name=model, atoms=atoms)
     test()
+
+    # make sure it errors out for non-FCC
+    model = 'EAM_Dynamo_AcklandBaconCalder_1997_Fe__MO_142799717516_005'
+    atoms = bulk('Fe','bcc',a=2.866,cubic=True)
+    test = TestDriver(model_name=model, atoms=atoms)
+    test()
