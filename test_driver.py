@@ -80,8 +80,8 @@ class TestDriver(CrystalGenomeTest):
 
         # assign default for FCC
         slip_plane = "[111]"
-        slip_direction_1 = "[112]"
-        slip_direction_2 = "[-110]"
+        slip_direction_1 = [1,1,2]
+        slip_direction_2 = [-1,1,0]
         slip_plane_offset = 0.25
 
         # get the necessary parameters
@@ -93,16 +93,16 @@ class TestDriver(CrystalGenomeTest):
         output_dict = self._main(model, species, latconst)
         GammaSurf = output_dict['GammaSurf']
         Gamma_X_dir1_frac = output_dict['Gamma_X_dir1_frac']
-        Gamma_X_dir2_frac = output_dict['Gamma_X_dir2_frac']
+        Gamma_Y_dir2_frac = output_dict['Gamma_Y_dir2_frac']
 
 
         ####################################################
         # PROPERTY WRITING
         ####################################################
-        self._add_property_instance("gamma-surface-crystal")
+        self._add_property_instance("gamma-surface")
         self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
         self._add_key_to_current_property_instance("fault-plane-shift-fraction-direction-1",Gamma_X_dir1_frac)
-        self._add_key_to_current_property_instance("fault-plane-shift-fraction-direction-2",Gamma_X_dir2_frac)
+        self._add_key_to_current_property_instance("fault-plane-shift-fraction-direction-2",Gamma_Y_dir2_frac)
         self._add_key_to_current_property_instance("gamma-surface",GammaSurf,"ev/angstrom^2")
         self._add_key_to_current_property_instance("slip-plane",slip_plane)
         self._add_key_to_current_property_instance("slip-direction-1",slip_direction_1)
@@ -112,9 +112,18 @@ class TestDriver(CrystalGenomeTest):
 
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0):
+    def _main(self, Model, Species, LatConst, Pressure = 0.0):
         # Program Parameter Variables
         LatConst_Tol = 10e-4
+
+        if Pressure == float(0):
+                msg = (
+                    "\nInfo: Pressure was either specified as zero in input or not provided. "
+                    "Forgoing lattice constant calculation and "
+                    "proceeding with lattice constant specified.\n"
+                )
+                print(msg)
+
 
         # # Read the input variables from command line (see definitions in header)
         # Model = input("Enter the extended ID of a KIM Model:\n")
@@ -186,15 +195,15 @@ class TestDriver(CrystalGenomeTest):
         # -------------------------------------------------------------------------------
         #      Target variables to be calculated (see definitions in header)
         # -------------------------------------------------------------------------------
-        gamma_us = 0.0
-        gamma_isf = 0.0
-        gamma_ut = 0.0
-        gamma_esf = 0.0
+        # gamma_us = 0.0
+        # gamma_isf = 0.0
+        # gamma_ut = 0.0
+        # gamma_esf = 0.0
 
-        frac_us = 0.0
-        frac_ut = 0.0
-        FracList = []
-        SFEDList = []
+        # frac_us = 0.0
+        # frac_ut = 0.0
+        # FracList = []
+        # SFEDList = []
         Gamma_X_112_frac = [0 + x * 1.0 / (Gamma_Nx_112 - 1) for x in range(Gamma_Nx_112)]
         Gamma_Y_110_frac = [0 + y * 1.0 / (Gamma_Ny_110 - 1) for y in range(Gamma_Ny_110)]
         GammaSurf = []
@@ -295,145 +304,145 @@ class TestDriver(CrystalGenomeTest):
         os.system("rm " + stack_data_flnm)
         os.system("rm " + stack_inp_flnm)
 
-        # ------------------------------------------------------------------------------
-        #                       COMPUTE STACKING FAULT ENERGIES
-        # ------------------------------------------------------------------------------
-        with open(stack_inp_flnm, "w") as fstack:
-            InpStr = setup_problem(
-                Species,
-                Model,
-                N_Layers,
-                LatConst,
-                Pressure,
-                Rigid_Grp_SIdx,
-                Rigid_Grp_EIdx,
-                N_Twin_Layers,
-            )
-            fstack.write(InpStr)
-            InpStr = make_stack_twin_test(stack_data_flnm)
-            fstack.write(InpStr)
+        # # ------------------------------------------------------------------------------
+        # #                       COMPUTE STACKING FAULT ENERGIES
+        # # ------------------------------------------------------------------------------
+        # with open(stack_inp_flnm, "w") as fstack:
+        #     InpStr = setup_problem(
+        #         Species,
+        #         Model,
+        #         N_Layers,
+        #         LatConst,
+        #         Pressure,
+        #         Rigid_Grp_SIdx,
+        #         Rigid_Grp_EIdx,
+        #         N_Twin_Layers,
+        #     )
+        #     fstack.write(InpStr)
+        #     InpStr = make_stack_twin_test(stack_data_flnm)
+        #     fstack.write(InpStr)
 
-        # Run the LAMMPS script
-        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        # # Run the LAMMPS script
+        # os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
-        # Read the LAMMPS output file
-        """-----------------------------------------------------------------------------
-        File format: stack.dat
-        Line 1:             NPoints 1 nincr nincr
-        Line 1+1 to 1+1+2*nincr:    [ column1 = frac_disp, column2 = SFED ]
-        Line:                gamma_us
-        Line:                gamma_isf
-        Line:                gamma_ut
-        Line:                gamma_esf
-        -----------------------------------------------------------------------------"""
-        with open(stack_data_flnm) as fstack:
-            linelist = fstack.readlines()
-            linebuf = linelist[0].split()
-            size_0 = int(linebuf[2])
-            size_1 = int(linebuf[3])
-            size_2 = int(linebuf[4])
-            # Read the data into arrays
-            listend = 1 + size_0 + size_1 + size_2
-            for i in range(1, listend):
-                linebuf = linelist[i].split()
-                FracList.append(float(linebuf[0]))
-                SFEDList.append(float(linebuf[1]))
-            # Store the isf and esf values
-            gamma_isf = SFEDList[size_0 + size_1 - 1]
-            gamma_esf = SFEDList[size_0 + size_1 + size_2 - 1]
+        # # Read the LAMMPS output file
+        # """-----------------------------------------------------------------------------
+        # File format: stack.dat
+        # Line 1:             NPoints 1 nincr nincr
+        # Line 1+1 to 1+1+2*nincr:    [ column1 = frac_disp, column2 = SFED ]
+        # Line:                gamma_us
+        # Line:                gamma_isf
+        # Line:                gamma_ut
+        # Line:                gamma_esf
+        # -----------------------------------------------------------------------------"""
+        # with open(stack_data_flnm) as fstack:
+        #     linelist = fstack.readlines()
+        #     linebuf = linelist[0].split()
+        #     size_0 = int(linebuf[2])
+        #     size_1 = int(linebuf[3])
+        #     size_2 = int(linebuf[4])
+        #     # Read the data into arrays
+        #     listend = 1 + size_0 + size_1 + size_2
+        #     for i in range(1, listend):
+        #         linebuf = linelist[i].split()
+        #         FracList.append(float(linebuf[0]))
+        #         SFEDList.append(float(linebuf[1]))
+        #     # Store the isf and esf values
+        #     gamma_isf = SFEDList[size_0 + size_1 - 1]
+        #     gamma_esf = SFEDList[size_0 + size_1 + size_2 - 1]
 
-        # delete the output file
-        os.system("rm " + stack_data_flnm)
-        os.system("rm " + stack_inp_flnm)
+        # # delete the output file
+        # os.system("rm " + stack_data_flnm)
+        # os.system("rm " + stack_inp_flnm)
 
-        # ------------------------------------------------------------------------------
-        #             Refinement to locate the unstable position - gamma_us
-        # ------------------------------------------------------------------------------
-        # Locate the unstable stacking fault energy
-        us_rough_Idx, us_rough_val = max(
-            enumerate(SFEDList[0 : size_0 + size_1 - 1]), key=operator.itemgetter(1)
-        )
+        # # ------------------------------------------------------------------------------
+        # #             Refinement to locate the unstable position - gamma_us
+        # # ------------------------------------------------------------------------------
+        # # Locate the unstable stacking fault energy
+        # us_rough_Idx, us_rough_val = max(
+        #     enumerate(SFEDList[0 : size_0 + size_1 - 1]), key=operator.itemgetter(1)
+        # )
 
-        SFrac_us = FracList[us_rough_Idx - 1]
-        dFrac_us = FracList[us_rough_Idx] - FracList[us_rough_Idx - 1]
+        # SFrac_us = FracList[us_rough_Idx - 1]
+        # dFrac_us = FracList[us_rough_Idx] - FracList[us_rough_Idx - 1]
 
-        # Make input for the refinement
-        with open(stack_inp_flnm, "w") as fstack:
-            InpStr = setup_problem(
-                Species,
-                Model,
-                N_Layers,
-                LatConst,
-                Pressure,
-                Rigid_Grp_SIdx,
-                Rigid_Grp_EIdx,
-                N_Twin_Layers,
-            )
-            fstack.write(InpStr)
-            InpStr = make_refine_us(SFrac_us, dFrac_us, stack_data_flnm)
-            fstack.write(InpStr)
+        # # Make input for the refinement
+        # with open(stack_inp_flnm, "w") as fstack:
+        #     InpStr = setup_problem(
+        #         Species,
+        #         Model,
+        #         N_Layers,
+        #         LatConst,
+        #         Pressure,
+        #         Rigid_Grp_SIdx,
+        #         Rigid_Grp_EIdx,
+        #         N_Twin_Layers,
+        #     )
+        #     fstack.write(InpStr)
+        #     InpStr = make_refine_us(SFrac_us, dFrac_us, stack_data_flnm)
+        #     fstack.write(InpStr)
 
-        # Run the LAMMPS script
-        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        # # Run the LAMMPS script
+        # os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
-        # Read the Lammps output file
-        with open(stack_data_flnm) as fstack:
-            linelist = fstack.readlines()
-            linebuf = linelist[1].split()
-            frac_us = float(linebuf[0])
-            gamma_us = float(linebuf[1])
+        # # Read the Lammps output file
+        # with open(stack_data_flnm) as fstack:
+        #     linelist = fstack.readlines()
+        #     linebuf = linelist[1].split()
+        #     frac_us = float(linebuf[0])
+        #     gamma_us = float(linebuf[1])
 
-        # delete the output file
-        os.system("rm " + stack_data_flnm)
-        os.system("rm " + stack_inp_flnm)
+        # # delete the output file
+        # os.system("rm " + stack_data_flnm)
+        # os.system("rm " + stack_inp_flnm)
 
-        # ------------------------------------------------------------------------------
-        #             Refinement to locate the unstable position - gamma_ut
-        # ------------------------------------------------------------------------------
-        # Locate the unstable stacking fault energy
-        ut_rough_Idx, ut_rough_val = max(
-            enumerate(SFEDList[size_0 + size_1 : size_0 + size_1 + size_2 - 1]),
-            key=operator.itemgetter(1),
-        )
+        # # ------------------------------------------------------------------------------
+        # #             Refinement to locate the unstable position - gamma_ut
+        # # ------------------------------------------------------------------------------
+        # # Locate the unstable stacking fault energy
+        # ut_rough_Idx, ut_rough_val = max(
+        #     enumerate(SFEDList[size_0 + size_1 : size_0 + size_1 + size_2 - 1]),
+        #     key=operator.itemgetter(1),
+        # )
 
-        SFrac_ut = FracList[size_0 + size_1 + ut_rough_Idx - 1]
-        dFrac_ut = (
-            FracList[size_0 + size_1 + ut_rough_Idx]
-            - FracList[size_0 + size_1 + ut_rough_Idx - 1]
-        )
+        # SFrac_ut = FracList[size_0 + size_1 + ut_rough_Idx - 1]
+        # dFrac_ut = (
+        #     FracList[size_0 + size_1 + ut_rough_Idx]
+        #     - FracList[size_0 + size_1 + ut_rough_Idx - 1]
+        # )
 
-        # Make input for the refinement
-        with open(stack_inp_flnm, "w") as fstack:
-            InpStr = setup_problem(
-                Species,
-                Model,
-                N_Layers,
-                LatConst,
-                Pressure,
-                Rigid_Grp_SIdx,
-                Rigid_Grp_EIdx,
-                N_Twin_Layers,
-            )
-            fstack.write(InpStr)
-            InpStr = make_refine_ut(SFrac_ut, dFrac_ut, stack_data_flnm)
-            fstack.write(InpStr)
+        # # Make input for the refinement
+        # with open(stack_inp_flnm, "w") as fstack:
+        #     InpStr = setup_problem(
+        #         Species,
+        #         Model,
+        #         N_Layers,
+        #         LatConst,
+        #         Pressure,
+        #         Rigid_Grp_SIdx,
+        #         Rigid_Grp_EIdx,
+        #         N_Twin_Layers,
+        #     )
+        #     fstack.write(InpStr)
+        #     InpStr = make_refine_ut(SFrac_ut, dFrac_ut, stack_data_flnm)
+        #     fstack.write(InpStr)
 
-        # Run the LAMMPS script
-        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        # # Run the LAMMPS script
+        # os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
-        # Read the Lammps output file
-        with open(stack_data_flnm) as fstack:
-            linelist = fstack.readlines()
-            linebuf = linelist[1].split()
-            frac_ut = float(linebuf[0])
-            gamma_ut = float(linebuf[1])
+        # # Read the Lammps output file
+        # with open(stack_data_flnm) as fstack:
+        #     linelist = fstack.readlines()
+        #     linebuf = linelist[1].split()
+        #     frac_ut = float(linebuf[0])
+        #     gamma_ut = float(linebuf[1])
 
-        # delete the output and log files
-        os.system("rm " + stack_data_flnm)
-        os.system("rm " + stack_inp_flnm)
-        os.system("rm " + stack_log_flnm)
-        if os.path.exists("kim.log"):
-            os.system("rm kim.log")
+        # # delete the output and log files
+        # os.system("rm " + stack_data_flnm)
+        # os.system("rm " + stack_inp_flnm)
+        # os.system("rm " + stack_log_flnm)
+        # if os.path.exists("kim.log"):
+        #     os.system("rm kim.log")
 
         # # ------------------------------------------------------------------------------
         # #                    PRINT FINAL OUTPUTS TO KIM EDN FORMAT
@@ -551,28 +560,28 @@ class TestDriver(CrystalGenomeTest):
         #     for i in range(0, size_0 + size_1 + size_2):
         #         fstack.write("%.12f %.12f \n" % (FracList[i], SFEDList[i]))
 
-        # ------------------------------------------------------------------------------
-        #       Plot stacking energy curve to png and svg using matplotlib
-        # ------------------------------------------------------------------------------
-        plt.figure(1, (8, 6))
-        plt.plot(FracList, SFEDList, "ro", markersize=2)
-        plt.xlim(FracList[0], FracList[-1])
-        plt.grid("on", linestyle="--", alpha=0.5)
-        plt.xlabel(r"$\frac{s\,_{[112]}}{a/\sqrt{6}}$", fontsize=15)
-        plt.ylabel("Stacking fault energy (eV/$\mathrm{\AA}^2$)")  # noqa: W605
-        plt.savefig(
-            os.path.join(
-                output_dir,
-                "stacking-fault-relaxed-energy-curve-fcc-" + Species + "-" + Model + ".png",
-            ),
-            dpi=300,
-        )
-        plt.savefig(
-            os.path.join(
-                output_dir,
-                "stacking-fault-relaxed-energy-curve-fcc-" + Species + "-" + Model + ".svg",
-            )
-        )
+        # # ------------------------------------------------------------------------------
+        # #       Plot stacking energy curve to png and svg using matplotlib
+        # # ------------------------------------------------------------------------------
+        # plt.figure(1, (8, 6))
+        # plt.plot(FracList, SFEDList, "ro", markersize=2)
+        # plt.xlim(FracList[0], FracList[-1])
+        # plt.grid("on", linestyle="--", alpha=0.5)
+        # plt.xlabel(r"$\frac{s\,_{[112]}}{a/\sqrt{6}}$", fontsize=15)
+        # plt.ylabel("Stacking fault energy (eV/$\mathrm{\AA}^2$)")  # noqa: W605
+        # plt.savefig(
+        #     os.path.join(
+        #         output_dir,
+        #         "stacking-fault-relaxed-energy-curve-fcc-" + Species + "-" + Model + ".png",
+        #     ),
+        #     dpi=300,
+        # )
+        # plt.savefig(
+        #     os.path.join(
+        #         output_dir,
+        #         "stacking-fault-relaxed-energy-curve-fcc-" + Species + "-" + Model + ".svg",
+        #     )
+        # )
 
         # ------------------------------------------------------------------------------
         #         Plot gamma surface to png and svg using matplotlib
@@ -593,57 +602,57 @@ class TestDriver(CrystalGenomeTest):
         labelfontsize = 15
         labelpadding3d = 20
 
-        fig = plt.figure(figsize=plt.figaspect(0.5) * 1.5)
-        ax_3d = fig.add_subplot(projection="3d")
-        gamma_surf = ax_3d.plot_surface(
-            Gamma_X_112_frac_grid,
-            Gamma_Y_110_frac_grid,
-            GammaSurf,
-            cmap=cm.bone,
-            linewidth=0,
-            antialiased=True,
-            vmin=0.0,
-        )
-        ax_3d.set_xlabel(label112, labelpad=labelpadding3d, fontsize=labelfontsize)
-        ax_3d.set_ylabel(label110, labelpad=labelpadding3d, fontsize=labelfontsize)
-        ax_3d.set_zlabel(energy_label, labelpad=10)
+        # fig = plt.figure(figsize=plt.figaspect(0.5) * 1.5)
+        # ax_3d = fig.add_subplot(projection="3d")
+        # gamma_surf = ax_3d.plot_surface(
+        #     Gamma_X_112_frac_grid,
+        #     Gamma_Y_110_frac_grid,
+        #     GammaSurf,
+        #     cmap=cm.bone,
+        #     linewidth=0,
+        #     antialiased=True,
+        #     vmin=0.0,
+        # )
+        # ax_3d.set_xlabel(label112, labelpad=labelpadding3d, fontsize=labelfontsize)
+        # ax_3d.set_ylabel(label110, labelpad=labelpadding3d, fontsize=labelfontsize)
+        # ax_3d.set_zlabel(energy_label, labelpad=10)
 
-        ax_3d.set_xlim(0, 1)
-        ax_3d.set_ylim(0, 1)
-        ax_3d.tick_params(pad=7)
+        # ax_3d.set_xlim(0, 1)
+        # ax_3d.set_ylim(0, 1)
+        # ax_3d.tick_params(pad=7)
 
-        ax_3d.zaxis.set_major_formatter(FormatStrFormatter("%.05f"))
-        fig.colorbar(gamma_surf, shrink=0.65, aspect=10, pad=0.035)
+        # ax_3d.zaxis.set_major_formatter(FormatStrFormatter("%.05f"))
+        # fig.colorbar(gamma_surf, shrink=0.65, aspect=10, pad=0.035)
 
-        fig.tight_layout(h_pad=0.05)
+        # fig.tight_layout(h_pad=0.05)
 
-        # Render at one view
-        ax_3d.view_init(45, -135)
-        fig.savefig(
-            os.path.join(
-                output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view1.png"
-            ),
-            dpi=300,
-        )
-        fig.savefig(
-            os.path.join(
-                output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view1.svg"
-            )
-        )
+        # # Render at one view
+        # ax_3d.view_init(45, -135)
+        # fig.savefig(
+        #     os.path.join(
+        #         output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view1.png"
+        #     ),
+        #     dpi=300,
+        # )
+        # fig.savefig(
+        #     os.path.join(
+        #         output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view1.svg"
+        #     )
+        # )
 
-        # Rotate and render again in a second image
-        ax_3d.view_init(45, 135)
-        fig.savefig(
-            os.path.join(
-                output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view2.png"
-            ),
-            dpi=300,
-        )
-        fig.savefig(
-            os.path.join(
-                output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view2.svg"
-            )
-        )
+        # # Rotate and render again in a second image
+        # ax_3d.view_init(45, 135)
+        # fig.savefig(
+        #     os.path.join(
+        #         output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view2.png"
+        #     ),
+        #     dpi=300,
+        # )
+        # fig.savefig(
+        #     os.path.join(
+        #         output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view2.svg"
+        #     )
+        # )
 
         # Finally, draw the 2d projection of the gamma surface
         plt.close("all")
