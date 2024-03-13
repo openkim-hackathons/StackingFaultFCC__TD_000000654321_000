@@ -37,22 +37,16 @@ matplotlib.use("Agg")  # Use backend for non-interactive plotting
 
 class TestDriver(CrystalGenomeTest):
     """
-    Intrinsic-extrinsic stacking fault and gamma surface calculation for FCC lattice
+    Gamma surface calculation for crystal lattice
 
-    Description: This script computes the stacking fault properties of an FCC crystal. For more details, refer to README.txt
+    Description: This script computes the gamma surface energies of a general crystal. For more details, refer to README.txt
 
-    Author:  Subrahmanyam Pattamatta
-    Email:   lalithasubrahmanyam@gmail.com
-
-    Inputs:  Species    --> (required) Atomic species
-            Model  --> (required) Extended ID of a KIM Model
-            LatConst   --> (required) Equilibrium (zero-pressure, zero-temperature) FCC lattice constant (meters)
-            Pressure   --> (optional) Hydrostatic pressure (bars).  If omitted, the pressure is taken to be zero.
-                                    If the value specified is non-zero, the lattice constant specified for
-                                    LatConst will be used to construct an initial lattice geometry for an NPT
-                                    simulation carried out at the specified pressure and temperature of 1e-4
-                                    Kelvin from which the actual lattice constant at the specified pressure is
-                                    calculated.
+    Inputs: Pressure   --> (optional) Hydrostatic pressure (bars).  If omitted, the pressure is taken to be zero.
+                            If the value specified is non-zero, the lattice constant specified for
+                            LatConst will be used to construct an initial lattice geometry for an NPT
+                            simulation carried out at the specified pressure and temperature of 1e-4
+                            Kelvin from which the actual lattice constant at the specified pressure is
+                            calculated.
 
     Outputs: gamma_us,  frac_us         # Unstable stacking fault energy  (max)
             gamma_isf, frac_isf = 1.0  # Intrinsic stacking fault energy (min)
@@ -70,7 +64,12 @@ class TestDriver(CrystalGenomeTest):
         LAMMPS executable with KIM API support
     """
     
-    def _calculate(self, structure_index: int):
+    def _calculate(self, 
+                   structure_index: int, 
+                   pressure = 0.0):
+
+        # verify with ilia:
+            # where to have slip plane, dir1 and dir2, offset and pressure hard coded/input.
         
         # note: don't need pressure b/c first iteration will be 0 only
         # if statement to check for FCC
@@ -90,7 +89,7 @@ class TestDriver(CrystalGenomeTest):
         species = self.stoichiometric_species[0]
 
         # run simulations
-        output_dict = self._main(model, species, latconst)
+        output_dict = self._main(model, species, latconst, Pressure = pressure)
         GammaSurf = output_dict['GammaSurf']
         Gamma_X_dir1_frac = output_dict['Gamma_X_dir1_frac']
         Gamma_Y_dir2_frac = output_dict['Gamma_Y_dir2_frac']
@@ -179,8 +178,8 @@ class TestDriver(CrystalGenomeTest):
         N_Twin_Layers = round(N_Layers / 2)
         Rigid_Grp_SIdx = 15
         Rigid_Grp_EIdx = 45
-        Gamma_Nx_112 = 50
-        Gamma_Ny_110 = 50
+        Gamma_Nx_dir1 = 50 # change this from 50 to 3 for testing
+        Gamma_Ny_dir2 = 50 # change this from 50 to 3 for testing
 
         output_dir = "./output"  # Output directory
         if not os.path.exists(output_dir):
@@ -204,8 +203,8 @@ class TestDriver(CrystalGenomeTest):
         # frac_ut = 0.0
         # FracList = []
         # SFEDList = []
-        Gamma_X_112_frac = [0 + x * 1.0 / (Gamma_Nx_112 - 1) for x in range(Gamma_Nx_112)]
-        Gamma_Y_110_frac = [0 + y * 1.0 / (Gamma_Ny_110 - 1) for y in range(Gamma_Ny_110)]
+        Gamma_X_dir1_frac = [0 + x * 1.0 / (Gamma_Nx_dir1 - 1) for x in range(Gamma_Nx_dir1)]
+        Gamma_Y_dir2_frac = [0 + y * 1.0 / (Gamma_Ny_dir2 - 1) for y in range(Gamma_Ny_dir2)]
         GammaSurf = []
 
         if not Pressure:
@@ -274,7 +273,7 @@ class TestDriver(CrystalGenomeTest):
                 N_Twin_Layers,
             )
             fstack.write(InpStr)
-            InpStr = make_gammasurface_moves(stack_data_flnm, Gamma_Nx_112, Gamma_Ny_110)
+            InpStr = make_gammasurface_moves(stack_data_flnm, Gamma_Nx_dir1, Gamma_Ny_dir2)
             fstack.write(InpStr)
 
         # Run the LAMMPS script
@@ -291,9 +290,9 @@ class TestDriver(CrystalGenomeTest):
             # Discard the header, index = 0
             # Read the data into arrays
             count = 1
-            for yIdx in range(1, Gamma_Ny_110 + 1):
+            for yIdx in range(1, Gamma_Ny_dir2 + 1):
                 temp_list_at_each_y = []
-                for xIdx in range(1, Gamma_Nx_112 + 1):
+                for xIdx in range(1, Gamma_Nx_dir1 + 1):
                     linebuf = linelist[count].split()
                     count = count + 1
                     # Discard x any y coordinates
@@ -467,8 +466,8 @@ class TestDriver(CrystalGenomeTest):
         #     dump_string_array("species", Species, fstack)
         #     dump_dbl_scalar("a", LatConst, fstack, "angstrom")
         #     dump_dbl_vector("cauchy-stress", CauchyStress, fstack, "bar")
-        #     dump_dbl_vector("fault-plane-shift-fraction-112", Gamma_X_112_frac, fstack)
-        #     dump_dbl_vector("fault-plane-shift-fraction-110", Gamma_Y_110_frac, fstack)
+        #     dump_dbl_vector("fault-plane-shift-fraction-112", Gamma_X_dir1_frac, fstack)
+        #     dump_dbl_vector("fault-plane-shift-fraction-110", Gamma_Y_dir2_frac, fstack)
         #     dump_dbl_matrix("gamma-surface", GammaSurf, fstack, "eV/angstrom^2")
         #     fstack.write(" }\n\n")
 
@@ -587,13 +586,13 @@ class TestDriver(CrystalGenomeTest):
         #         Plot gamma surface to png and svg using matplotlib
         # ------------------------------------------------------------------------------
         # Convert data to numpy for matplotlib
-        Gamma_X_112_frac, Gamma_Y_110_frac = (
-            np.asarray(Gamma_X_112_frac),
-            np.asarray(Gamma_Y_110_frac),
+        Gamma_X_dir1_frac, Gamma_Y_dir2_frac = (
+            np.asarray(Gamma_X_dir1_frac),
+            np.asarray(Gamma_Y_dir2_frac),
         )
         GammaSurf = np.array(GammaSurf)
-        Gamma_X_112_frac_grid, Gamma_Y_110_frac_grid = np.meshgrid(
-            Gamma_X_112_frac, Gamma_Y_110_frac
+        Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid = np.meshgrid(
+            Gamma_X_dir1_frac, Gamma_Y_dir2_frac
         )
 
         label112 = r"$\frac{s\,_{[112]}}{\sqrt{6}a/2}$"
@@ -605,8 +604,8 @@ class TestDriver(CrystalGenomeTest):
         # fig = plt.figure(figsize=plt.figaspect(0.5) * 1.5)
         # ax_3d = fig.add_subplot(projection="3d")
         # gamma_surf = ax_3d.plot_surface(
-        #     Gamma_X_112_frac_grid,
-        #     Gamma_Y_110_frac_grid,
+        #     Gamma_X_dir1_frac_grid,
+        #     Gamma_Y_dir2_frac_grid,
         #     GammaSurf,
         #     cmap=cm.bone,
         #     linewidth=0,
@@ -660,7 +659,7 @@ class TestDriver(CrystalGenomeTest):
 
         ax_2d = fig.add_subplot()
         projected_gamma_surf = ax_2d.pcolor(
-            Gamma_X_112_frac_grid, Gamma_Y_110_frac_grid, GammaSurf, cmap=cm.bone
+            Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid, GammaSurf, cmap=cm.bone
         )
         ax_2d.set_xlabel(label112, fontsize=labelfontsize)
         ax_2d.set_ylabel(label110, fontsize=labelfontsize)
@@ -682,8 +681,8 @@ class TestDriver(CrystalGenomeTest):
             bbox_inches="tight",
         )
 
-        output_dict = {'Gamma_X_dir1_frac': Gamma_X_112_frac,
-                       'Gamma_Y_dir2_frac': Gamma_Y_110_frac,
+        output_dict = {'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
+                       'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
                        'GammaSurf': GammaSurf
                        }
         #               'gamma_us': gamma_us,
