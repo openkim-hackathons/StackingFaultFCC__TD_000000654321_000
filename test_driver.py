@@ -90,7 +90,10 @@ class TestDriver(CrystalGenomeTest):
         species = self.stoichiometric_species[0]
 
         # run simulations
-        GammaSurf = self._main(model, species, latconst)
+        output_dict = self._main(model, species, latconst)
+        GammaSurf = output_dict['GammaSurf']
+        Gamma_X_dir1_frac = output_dict['Gamma_X_dir1_frac']
+        Gamma_X_dir2_frac = output_dict['Gamma_X_dir2_frac']
 
 
         ####################################################
@@ -98,6 +101,8 @@ class TestDriver(CrystalGenomeTest):
         ####################################################
         self._add_property_instance("gamma-surface-crystal")
         self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
+        self._add_key_to_current_property_instance("fault-plane-shift-fraction-direction-1",Gamma_X_dir1_frac)
+        self._add_key_to_current_property_instance("fault-plane-shift-fraction-direction-2",Gamma_X_dir2_frac)
         self._add_key_to_current_property_instance("gamma-surface",GammaSurf,"ev/angstrom^2")
         self._add_key_to_current_property_instance("slip-plane",slip_plane)
         self._add_key_to_current_property_instance("slip-direction-1",slip_direction_1)
@@ -668,7 +673,11 @@ class TestDriver(CrystalGenomeTest):
             bbox_inches="tight",
         )
 
-        # output_dict = {'gamma_us': gamma_us,
+        output_dict = {'Gamma_X_dir1_frac': Gamma_X_112_frac,
+                       'Gamma_Y_dir2_frac': Gamma_Y_110_frac,
+                       'GammaSurf': GammaSurf
+                       }
+        #               'gamma_us': gamma_us,
         #               'gamma_isf': gamma_isf,
         #               'gamma_ut': gamma_ut,
         #               'gamma_esf': gamma_esf,
@@ -676,11 +685,8 @@ class TestDriver(CrystalGenomeTest):
         #               'frac_ut': frac_ut,
         #               'FracList': FracList,
         #               'SFEDList': SFEDList,
-        #               'Gamma_X_112_frac': Gamma_X_112_frac,
-        #               'Gamma_Y_110_frac': Gamma_Y_110_frac,
-        #               'GammaSurf': GammaSurf
-        #               }
-        return GammaSurf
+                       
+        return output_dict
 
 
 # Function for printing to stderr
