@@ -1,9 +1,9 @@
 {
-   "property-id" "GammaSurf"
+   "property-id" "tag:staff@noreply.openkim.org,2024-03-11:gamma-surface"
 
-   "property-title" "The relaxed gamma surface created by rigid slip of a (111) plane on a grid of points defined by [112] and [-110] directions in a monoatomic fcc crystal at zero temperature and a given pressure"
+   "property-title" "The relaxed gamma surface created by rigid slip of a plane on a grid of points defined by two directions in a crystal at zero temperature and a given pressure"
 
-   "property-description" "The relaxed energy-per-area versus all possible slips lying in the (111) lattice plane defines the Gamma surface. Due to periodicity of the crystal lattice, it suffices to sample a grid of points that span  a*sqrt(6)/2 and a*sqrt(2)/2  along the [112] and [-110] directions, respectively. This is achieved through a sequence of rigid displacements applied to one part of an fcc crystal relative to another on the (111) plane on a grid defined by the [112] and [-110] directions at zero temperature and a specified pressure. Following each slip displacement, a relaxation of the atomic coordinates is performed in the direction perpendicular to the slip plane to arrive at the energy-per-area."
+   "property-description" "The relaxed energy-per-area versus all possible slips lying in a given plane defines the Gamma surface. THIS IS OBSOLETE; NEED TO REWORK TO BE GENERAL. Due to periodicity of the crystal lattice, it suffices to sample a grid of points that span  a*sqrt(6)/2 and a*sqrt(2)/2  along the [112] and [-110] directions, respectively. This is achieved through a sequence of rigid displacements applied to one part of an fcc crystal relative to another on the (111) plane on a grid defined by the [112] and [-110] directions at zero temperature and a specified pressure. Following each slip displacement, a relaxation of the atomic coordinates is performed in the direction perpendicular to the slip plane to arrive at the energy-per-area."
 
    "cell-cauchy-stress" {
         "type"         "float"
