@@ -1,0 +1,86 @@
+{
+   "property-id" "tag:staff@noreply.openkim.org,2024-03-11:property/unstable-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome"
+
+   "property-title" "Relaxed unstable stacking energy for a monoatomic fcc crystal at zero temperature and a given pressure"
+
+   "property-description" "The relaxed unstable stacking energy (USE) for a monoatomic fcc crystal at zero temperature and a specified pressure. The USE corresponds to the energy barrier for rigidly slipping one-half of an infinite crystal relative to the other along a <112> direction (fcc partial dislocation direction). Relaxation of the atomic positions is performed perpendicular to the fault plane."
+
+   "cell-cauchy-stress" {
+        "type"         "float"
+        "has-unit"     true
+        "extent"       [6]
+        "required"     true
+        "description"  "The [xx,yy,zz,yz,xz,xy] components of the prescribed symmetric Cauchy stress tensor. The numerical value of the stress tensor of a test result or reference data may be different due to tolerance, and can be checked by inspecting the output files of the test or the reference data description. The components should be expressed in the same coordinate system as the structure specified by prototype-label and parameter-values, with the orientation of lattice vectors defined in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017)."
+  }
+
+   "unstable-stacking-energy" {
+       "type"         "float"
+       "has-unit"     true
+       "extent"       []
+       "required"     true
+       "description"  "Relaxed unstable stacking energy in units of energy per area."
+   }   
+
+    "unstable-slip-fraction" {
+       "type"         "float"
+       "has-unit"     false
+       "extent"       []
+       "required"     false
+       "description"  "The relative displacement in the 1/6<112> direction between the two crystal parts where the energy is maximum. The slip is normalized by the partial dislocation Burgers vector a0/sqrt(6). Therefore 'unstable-slip-fraction' must be between 0.0 and 1.0."
+   } 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; BELOW IS THE DESCRIPTION OF THE CRYSTAL THAT SHOULD PROBABLY BE IN EVERY
+; CRYSTAL GENOME PROPERTY DEFINITION
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  "prototype-label" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       []
+    "required"     true
+    "description"  "Prototype label (not including an enumeration suffix) as defined by the AFLOW standard (e.g. 'A_tI4_141_a') for the structure. It is expected that the alphabetically lowest of all equivalent labels is chosen."
+  }
+  "stoichiometric-species" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       [":"]
+    "required"     true
+    "description"  "Element symbols corresponding to the atom types in the stoichiometric formula which appears at the start of the prototype label (e.g. ['Mo','S'] for the AB2 stoichiometric formula, means that the 'A' atom is 'Mo' and the 'B' atom is 'S' for the MoS_2 structure)."
+  }
+  "a" {
+    "type"         "float"
+    "has-unit"     true
+    "extent"       []
+    "required"     true
+    "description"  "The average 'a' lattice constant of the crystal structure as defined by the AFLOW standard. Relative values of other lattice parameters (if present) are given in the 'parameter-values' key."
+  }
+  "parameter-names" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       [":"]
+    "required"     false
+    "description"  "Names of the parameters other than 'a', if present, corresponding to this AFLOW prototype. These can include lattice parameters from the set {'b/a','c/a','alpha','beta','gamma'} (for the conventional crystal structure defined by lattice parameters a, b, and c and angles alpha, beta, gamma), and coordinates of Wyckoff positions that have a degree of variability labeled as 'x*', 'y*' and 'z*' where the asterisk represents an integer as defined by the AFLOW standard."
+  }
+  "parameter-values" {
+    "type"         "float"
+    "has-unit"     false
+    "extent"       [":"]
+    "required"     false
+    "description"  "Values for the parameters listed in 'parameter-names' corresponding to the average positions of the atoms. Note that all parameters are dimensionless."
+  }
+  "library-prototype-label" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       []
+    "required"     false
+    "description"  "The AFLOW library prototype, if any, matching the structure. Prototypes in the AFLOW library are associated with common short names used by the materials community. The library prototype includes an integer enumeration suffix defined by the AFLOW standard when there are multiple parameter values associated with the structure (e.g. 'A_tI4_141_a-001' for 'betaSn'). Because these prototype labels are named according to their original material's conventional chemical formula, they may differ from the 'prototype-label' key, which is expected to be standardized to have the alphabetically lowest possible of all equivalent labels."
+  }
+  "short-name" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       [":"]
+    "required"     false
+    "description"  "Commonly used name associated with the 'library-prototype-label' key according to the AFLOW prototype library (e.g. 'Face-Centered Cubic' or 'Molybdenite')."
+  }
+}

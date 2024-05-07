@@ -1,9 +1,9 @@
 {
-   "property-id" "tag:staff@noreply.openkim.org,2024-03-11:property/gamma-surface"
+   "property-id" "tag:staff@noreply.openkim.org,2024-03-11:property/unstable-twinning-fault-relaxed-energy-fcc-crystal-npt-crystal-genome"
 
-   "property-title" "The relaxed gamma surface created by rigid slip of a plane on a grid of points defined by two directions in a crystal at zero temperature and a given pressure"
+   "property-title" "Relaxed unstable twinning energy for a monoatomic fcc crystal at zero temperature and a given pressure"
 
-   "property-description" "The relaxed energy-per-area versus all possible slips lying in a given plane defines the Gamma surface. THIS IS OBSOLETE; NEED TO REWORK TO BE GENERAL. Due to periodicity of the crystal lattice, it suffices to sample a grid of points that span  a*sqrt(6)/2 and a*sqrt(2)/2  along the [112] and [-110] directions, respectively. This is achieved through a sequence of rigid displacements applied to one part of an fcc crystal relative to another on the (111) plane on a grid defined by the [112] and [-110] directions at zero temperature and a specified pressure. Following each slip displacement, a relaxation of the atomic coordinates is performed in the direction perpendicular to the slip plane to arrive at the energy-per-area."
+   "property-description" "The relaxed unstable twinning energy (UTE) for a monoatomic fcc crystal at a zero temperature and a specified pressure. The UTE corresponds to the energy barrier for rigidly slipping one part of an infinite crystal on a {111} plane adjacent to a preexisting intrinsic stacking fault relative to the other part along a <112> direction (fcc partial dislocation direction). Relaxation of the atomic coordinates is performed perpendicular to the fault plane."
 
    "cell-cauchy-stress" {
         "type"         "float"
@@ -13,71 +13,21 @@
         "description"  "The [xx,yy,zz,yz,xz,xy] components of the prescribed symmetric Cauchy stress tensor. The numerical value of the stress tensor of a test result or reference data may be different due to tolerance, and can be checked by inspecting the output files of the test or the reference data description. The components should be expressed in the same coordinate system as the structure specified by prototype-label and parameter-values, with the orientation of lattice vectors defined in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017)."
   }
 
-   "fault-plane-shift-fraction-direction-1" {
-       "type"         "float"
-       "has-unit"     false
-       "extent"       [":"]
-       "required"     true
-       "description"  "A list of relative displacements of the two crystal parts used to compute the gamma surface in the first direction. Each element corresponds to the relative displacement of the two crystal parts as a fraction of the the total displacement, a*sqrt(6)/2 in the [112] direction."
-   }
-
-   "fault-plane-shift-fraction-direction-2" {
-       "type"         "float"
-       "has-unit"     false
-       "extent"       [":"]
-       "required"     true
-       "description"  "A list of relative displacements of the two crystal parts used to compute the gamma surface in the second direction. Each element corresponds to the relative displacement of the two crystal parts as a fraction of the the total displacement, a*sqrt(2)/2 in the [-110] direction."
-   }
-
-   "gamma-surface" {
+   "unstable-twinning-energy" {
        "type"         "float"
        "has-unit"     true
-       "extent"       [":",":"]
-       "required"     true
-       "description"  "The relaxed excess energy-per-area of the fault plane for a given relative displacement of the two crystal parts.  All of the elements in a given sub-array contained within this array correspond to a single fractional displacement in the [-110] direction, but different fractional displacements in the [112] direction.  That is, if each sub-array contained in this array is taken to be a column in a matrix, the rows of this matrix would correspond to the elements in 'fault-plane-shift-fraction-112' and its columns would correspond to the elements of 'fault-plane-shift-fraction-110'."
-   }
-
-
-   "slip-plane" {
-       "type"         "string"
-       "has-unit"     false
        "extent"       []
        "required"     true
-       "description"  "The normal vector to the slip-plane"
-   }
-       
-   "slip-direction-1" {
-       "type"         "float"
-       "has-unit"     false
-       "extent"       [3]
-       "required"     true
-       "description"  "The first basis vector of the surface primitive cell."
-    }
+       "description"  "Relaxed unstable twinning energy in units of energy per area."
+   }   
 
-   "slip-direction-2" {
+    "unstable-slip-fraction" {
        "type"         "float"
-       "has-unit"     false
-       "extent"       [3]
-       "required"     true
-       "description"  "The second basis vector of the surface primitive cell."
-    }
-       
-   "slip-plane-offset" {
-       "type"         "float"
-       "has-unit"     false
-       "extent"       []
-       "required"     true
-       "description"  "The offset fraction of the slip-plane"
-   }
-       
-  "gamma-surface-plot" {
-       "type"         "file"
        "has-unit"     false
        "extent"       []
        "required"     false
-       "description"  "Gamma surface plot"
-   }
-
+       "description"  "The relative displacement in the 1/6<112> direction between the two crystal parts where the energy is maximum. The slip is normalized by the partial dislocation Burgers vector a0/sqrt(6). The slip is measured from an ideal fault-free structure. At a value of 1.0, an intrinsic stacking fault is formed. Therefore 'unstable-slip-fraction' must be between 1.0 and 2.0."
+   } 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; BELOW IS THE DESCRIPTION OF THE CRYSTAL THAT SHOULD PROBABLY BE IN EVERY
