@@ -90,25 +90,89 @@ class TestDriver(CrystalGenomeTest):
 
         # run simulations
         output_dict = self._main(model, species, latconst, Pressure = pressure)
-        GammaSurf = output_dict['GammaSurf']
-        Gamma_X_dir1_frac = output_dict['Gamma_X_dir1_frac']
-        Gamma_Y_dir2_frac = output_dict['Gamma_Y_dir2_frac']
 
 
         ####################################################
         # PROPERTY WRITING
         ####################################################
-        self._add_property_instance("gamma-surface")
-        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
-        self._add_key_to_current_property_instance("fault-plane-shift-fraction-direction-1",Gamma_X_dir1_frac)
-        self._add_key_to_current_property_instance("fault-plane-shift-fraction-direction-2",Gamma_Y_dir2_frac)
-        self._add_key_to_current_property_instance("gamma-surface",GammaSurf,"ev/angstrom^2")
-        self._add_key_to_current_property_instance("slip-plane",slip_plane)
-        self._add_key_to_current_property_instance("slip-direction-1",slip_direction_1)
-        self._add_key_to_current_property_instance("slip-direction-2",slip_direction_2)
-        self._add_key_to_current_property_instance("slip-plane-offset",slip_plane_offset)
-        #self._add_key_to_current_property_instance("gamma-surface-plot",gamma_surface_plot_loc)
 
+        # TODO: update these to latest
+        
+        # gamma-surface
+        self._add_property_instance("gamma-surface-relaxed-fcc-crystal-npt-crystal-genome")
+        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
+        # self._add_key_to_current_property_instance("cauchy-stress",
+        #                                            output_dict['CauchyStress'],
+        #                                            "bar")
+        self._add_key_to_current_property_instance("fault-plane-shift-fraction-110",
+                                                   output_dict['Gamma_Y_dir2_frac'])
+        self._add_key_to_current_property_instance("fault-plane-shift-fraction-112",
+                                                   output_dict['Gamma_X_dir1_frac'])
+        self._add_key_to_current_property_instance("gamma-surface",
+                                                   output_dict['GammaSurf'],
+                                                   "ev/angstrom^2")
+        # self._add_key_to_current_property_instance("gamma-surface-plot",
+        #                                            output_dict['gamma_surface_plot'])
+
+
+        # unstable-stacking-energy-fcc-crystal
+        self._add_property_instance("unstable-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
+        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
+        # self._add_key_to_current_property_instance("cauchy-stress",
+        #                                            output_dict['CauchyStress'],
+        #                                            "bar")
+        self._add_key_to_current_property_instance("unstable-stacking-energy",
+                                                   output_dict['gamma_us'],
+                                                   "eV/angstrom^2")
+        self._add_key_to_current_property_instance("unstable-slip-fraction",
+                                                   output_dict["frac_us"])
+
+
+        # intrinsic-stacking-fault-energy-fcc-crystal
+        self._add_property_instance("intrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
+        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
+        # self._add_key_to_current_property_instance("cauchy-stress",
+        #                                            output_dict['CauchyStress'],
+        #                                            "bar")
+        self._add_key_to_current_property_instance("intrinsic-stacking-fault-energy",
+                                                   output_dict['gamma_isf'],
+                                                   "eV/angstrom^2")
+
+
+        # unstable-twinning-energy-fcc-crystal
+        self._add_property_instance("unstable-twinning-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
+        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
+        # self._add_key_to_current_property_instance("cauchy-stress",
+        #                                            output_dict['CauchyStress'],
+        #                                            "bar")
+        self._add_key_to_current_property_instance("unstable-twinning-energy",
+                                                   output_dict['gamma_ut'],
+                                                   "eV/angstrom^2")
+        self._add_key_to_current_property_instance("unstable-slip-fraction",
+                                                   output_dict['frac_ut'])
+
+        
+        # extrinsic-stacking-fault-energy-fcc-crystal
+        self._add_property_instance("extrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
+        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
+        # self._add_key_to_current_property_instance("cauchy-stress",
+        #                                            output_dict['CauchyStress'],
+        #                                            "bar")
+        self._add_key_to_current_property_instance("extrinsic-stacking-fault-energy",
+                                                   output_dict['gamma_esf'],
+                                                   "eV/angstrom^2")
+
+        # stacking-energy-curve-fcc-crystal
+        self._add_property_instance("stacking-fault-relaxed-energy-curve-fcc-crystal-npt-crystal-genome")
+        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=True,write_temp=False) # last two default to False
+        # self._add_key_to_current_property_instance("cauchy-stress",
+        #                                            output_dict['CauchyStress'],
+        #                                            "bar")
+        self._add_key_to_current_property_instance("fault-plane-shift-fraction",
+                                                   output_dict['FracList'])
+        self._add_key_to_current_property_instance("fault-plane-energy",
+                                                   output_dict['SFEDList'],
+                                                   "eV/angstrom^2")
 
 
     def _main(self, Model, Species, LatConst, Pressure = 0.0):
@@ -194,15 +258,15 @@ class TestDriver(CrystalGenomeTest):
         # -------------------------------------------------------------------------------
         #      Target variables to be calculated (see definitions in header)
         # -------------------------------------------------------------------------------
-        # gamma_us = 0.0
-        # gamma_isf = 0.0
-        # gamma_ut = 0.0
-        # gamma_esf = 0.0
+        gamma_us = 0.0
+        gamma_isf = 0.0
+        gamma_ut = 0.0
+        gamma_esf = 0.0
 
-        # frac_us = 0.0
-        # frac_ut = 0.0
-        # FracList = []
-        # SFEDList = []
+        frac_us = 0.0
+        frac_ut = 0.0
+        FracList = []
+        SFEDList = []
         Gamma_X_dir1_frac = [0 + x * 1.0 / (Gamma_Nx_dir1 - 1) for x in range(Gamma_Nx_dir1)]
         Gamma_Y_dir2_frac = [0 + y * 1.0 / (Gamma_Ny_dir2 - 1) for y in range(Gamma_Ny_dir2)]
         GammaSurf = []
@@ -303,152 +367,152 @@ class TestDriver(CrystalGenomeTest):
         os.system("rm " + stack_data_flnm)
         os.system("rm " + stack_inp_flnm)
 
-        # # ------------------------------------------------------------------------------
-        # #                       COMPUTE STACKING FAULT ENERGIES
-        # # ------------------------------------------------------------------------------
-        # with open(stack_inp_flnm, "w") as fstack:
-        #     InpStr = setup_problem(
-        #         Species,
-        #         Model,
-        #         N_Layers,
-        #         LatConst,
-        #         Pressure,
-        #         Rigid_Grp_SIdx,
-        #         Rigid_Grp_EIdx,
-        #         N_Twin_Layers,
-        #     )
-        #     fstack.write(InpStr)
-        #     InpStr = make_stack_twin_test(stack_data_flnm)
-        #     fstack.write(InpStr)
+        # ------------------------------------------------------------------------------
+        #                       COMPUTE STACKING FAULT ENERGIES
+        # ------------------------------------------------------------------------------
+        with open(stack_inp_flnm, "w") as fstack:
+            InpStr = setup_problem(
+                Species,
+                Model,
+                N_Layers,
+                LatConst,
+                Pressure,
+                Rigid_Grp_SIdx,
+                Rigid_Grp_EIdx,
+                N_Twin_Layers,
+            )
+            fstack.write(InpStr)
+            InpStr = make_stack_twin_test(stack_data_flnm)
+            fstack.write(InpStr)
 
-        # # Run the LAMMPS script
-        # os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        # Run the LAMMPS script
+        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
-        # # Read the LAMMPS output file
-        # """-----------------------------------------------------------------------------
-        # File format: stack.dat
-        # Line 1:             NPoints 1 nincr nincr
-        # Line 1+1 to 1+1+2*nincr:    [ column1 = frac_disp, column2 = SFED ]
-        # Line:                gamma_us
-        # Line:                gamma_isf
-        # Line:                gamma_ut
-        # Line:                gamma_esf
-        # -----------------------------------------------------------------------------"""
-        # with open(stack_data_flnm) as fstack:
-        #     linelist = fstack.readlines()
-        #     linebuf = linelist[0].split()
-        #     size_0 = int(linebuf[2])
-        #     size_1 = int(linebuf[3])
-        #     size_2 = int(linebuf[4])
-        #     # Read the data into arrays
-        #     listend = 1 + size_0 + size_1 + size_2
-        #     for i in range(1, listend):
-        #         linebuf = linelist[i].split()
-        #         FracList.append(float(linebuf[0]))
-        #         SFEDList.append(float(linebuf[1]))
-        #     # Store the isf and esf values
-        #     gamma_isf = SFEDList[size_0 + size_1 - 1]
-        #     gamma_esf = SFEDList[size_0 + size_1 + size_2 - 1]
+        # Read the LAMMPS output file
+        """-----------------------------------------------------------------------------
+        File format: stack.dat
+        Line 1:             NPoints 1 nincr nincr
+        Line 1+1 to 1+1+2*nincr:    [ column1 = frac_disp, column2 = SFED ]
+        Line:                gamma_us
+        Line:                gamma_isf
+        Line:                gamma_ut
+        Line:                gamma_esf
+        -----------------------------------------------------------------------------"""
+        with open(stack_data_flnm) as fstack:
+            linelist = fstack.readlines()
+            linebuf = linelist[0].split()
+            size_0 = int(linebuf[2])
+            size_1 = int(linebuf[3])
+            size_2 = int(linebuf[4])
+            # Read the data into arrays
+            listend = 1 + size_0 + size_1 + size_2
+            for i in range(1, listend):
+                linebuf = linelist[i].split()
+                FracList.append(float(linebuf[0]))
+                SFEDList.append(float(linebuf[1]))
+            # Store the isf and esf values
+            gamma_isf = SFEDList[size_0 + size_1 - 1]
+            gamma_esf = SFEDList[size_0 + size_1 + size_2 - 1]
 
-        # # delete the output file
-        # os.system("rm " + stack_data_flnm)
-        # os.system("rm " + stack_inp_flnm)
+        # delete the output file
+        os.system("rm " + stack_data_flnm)
+        os.system("rm " + stack_inp_flnm)
 
-        # # ------------------------------------------------------------------------------
-        # #             Refinement to locate the unstable position - gamma_us
-        # # ------------------------------------------------------------------------------
-        # # Locate the unstable stacking fault energy
-        # us_rough_Idx, us_rough_val = max(
-        #     enumerate(SFEDList[0 : size_0 + size_1 - 1]), key=operator.itemgetter(1)
-        # )
+        # ------------------------------------------------------------------------------
+        #             Refinement to locate the unstable position - gamma_us
+        # ------------------------------------------------------------------------------
+        # Locate the unstable stacking fault energy
+        us_rough_Idx, us_rough_val = max(
+            enumerate(SFEDList[0 : size_0 + size_1 - 1]), key=operator.itemgetter(1)
+        )
 
-        # SFrac_us = FracList[us_rough_Idx - 1]
-        # dFrac_us = FracList[us_rough_Idx] - FracList[us_rough_Idx - 1]
+        SFrac_us = FracList[us_rough_Idx - 1]
+        dFrac_us = FracList[us_rough_Idx] - FracList[us_rough_Idx - 1]
 
-        # # Make input for the refinement
-        # with open(stack_inp_flnm, "w") as fstack:
-        #     InpStr = setup_problem(
-        #         Species,
-        #         Model,
-        #         N_Layers,
-        #         LatConst,
-        #         Pressure,
-        #         Rigid_Grp_SIdx,
-        #         Rigid_Grp_EIdx,
-        #         N_Twin_Layers,
-        #     )
-        #     fstack.write(InpStr)
-        #     InpStr = make_refine_us(SFrac_us, dFrac_us, stack_data_flnm)
-        #     fstack.write(InpStr)
+        # Make input for the refinement
+        with open(stack_inp_flnm, "w") as fstack:
+            InpStr = setup_problem(
+                Species,
+                Model,
+                N_Layers,
+                LatConst,
+                Pressure,
+                Rigid_Grp_SIdx,
+                Rigid_Grp_EIdx,
+                N_Twin_Layers,
+            )
+            fstack.write(InpStr)
+            InpStr = make_refine_us(SFrac_us, dFrac_us, stack_data_flnm)
+            fstack.write(InpStr)
 
-        # # Run the LAMMPS script
-        # os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        # Run the LAMMPS script
+        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
-        # # Read the Lammps output file
-        # with open(stack_data_flnm) as fstack:
-        #     linelist = fstack.readlines()
-        #     linebuf = linelist[1].split()
-        #     frac_us = float(linebuf[0])
-        #     gamma_us = float(linebuf[1])
+        # Read the Lammps output file
+        with open(stack_data_flnm) as fstack:
+            linelist = fstack.readlines()
+            linebuf = linelist[1].split()
+            frac_us = float(linebuf[0])
+            gamma_us = float(linebuf[1])
 
-        # # delete the output file
-        # os.system("rm " + stack_data_flnm)
-        # os.system("rm " + stack_inp_flnm)
+        # delete the output file
+        os.system("rm " + stack_data_flnm)
+        os.system("rm " + stack_inp_flnm)
 
-        # # ------------------------------------------------------------------------------
-        # #             Refinement to locate the unstable position - gamma_ut
-        # # ------------------------------------------------------------------------------
-        # # Locate the unstable stacking fault energy
-        # ut_rough_Idx, ut_rough_val = max(
-        #     enumerate(SFEDList[size_0 + size_1 : size_0 + size_1 + size_2 - 1]),
-        #     key=operator.itemgetter(1),
-        # )
+        # ------------------------------------------------------------------------------
+        #             Refinement to locate the unstable position - gamma_ut
+        # ------------------------------------------------------------------------------
+        # Locate the unstable stacking fault energy
+        ut_rough_Idx, ut_rough_val = max(
+            enumerate(SFEDList[size_0 + size_1 : size_0 + size_1 + size_2 - 1]),
+            key=operator.itemgetter(1),
+        )
 
-        # SFrac_ut = FracList[size_0 + size_1 + ut_rough_Idx - 1]
-        # dFrac_ut = (
-        #     FracList[size_0 + size_1 + ut_rough_Idx]
-        #     - FracList[size_0 + size_1 + ut_rough_Idx - 1]
-        # )
+        SFrac_ut = FracList[size_0 + size_1 + ut_rough_Idx - 1]
+        dFrac_ut = (
+            FracList[size_0 + size_1 + ut_rough_Idx]
+            - FracList[size_0 + size_1 + ut_rough_Idx - 1]
+        )
 
-        # # Make input for the refinement
-        # with open(stack_inp_flnm, "w") as fstack:
-        #     InpStr = setup_problem(
-        #         Species,
-        #         Model,
-        #         N_Layers,
-        #         LatConst,
-        #         Pressure,
-        #         Rigid_Grp_SIdx,
-        #         Rigid_Grp_EIdx,
-        #         N_Twin_Layers,
-        #     )
-        #     fstack.write(InpStr)
-        #     InpStr = make_refine_ut(SFrac_ut, dFrac_ut, stack_data_flnm)
-        #     fstack.write(InpStr)
+        # Make input for the refinement
+        with open(stack_inp_flnm, "w") as fstack:
+            InpStr = setup_problem(
+                Species,
+                Model,
+                N_Layers,
+                LatConst,
+                Pressure,
+                Rigid_Grp_SIdx,
+                Rigid_Grp_EIdx,
+                N_Twin_Layers,
+            )
+            fstack.write(InpStr)
+            InpStr = make_refine_ut(SFrac_ut, dFrac_ut, stack_data_flnm)
+            fstack.write(InpStr)
 
-        # # Run the LAMMPS script
-        # os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        # Run the LAMMPS script
+        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
-        # # Read the Lammps output file
-        # with open(stack_data_flnm) as fstack:
-        #     linelist = fstack.readlines()
-        #     linebuf = linelist[1].split()
-        #     frac_ut = float(linebuf[0])
-        #     gamma_ut = float(linebuf[1])
+        # Read the Lammps output file
+        with open(stack_data_flnm) as fstack:
+            linelist = fstack.readlines()
+            linebuf = linelist[1].split()
+            frac_ut = float(linebuf[0])
+            gamma_ut = float(linebuf[1])
 
-        # # delete the output and log files
-        # os.system("rm " + stack_data_flnm)
-        # os.system("rm " + stack_inp_flnm)
-        # os.system("rm " + stack_log_flnm)
-        # if os.path.exists("kim.log"):
-        #     os.system("rm kim.log")
+        # delete the output and log files
+        os.system("rm " + stack_data_flnm)
+        os.system("rm " + stack_inp_flnm)
+        os.system("rm " + stack_log_flnm)
+        if os.path.exists("kim.log"):
+            os.system("rm kim.log")
 
         # # ------------------------------------------------------------------------------
         # #                    PRINT FINAL OUTPUTS TO KIM EDN FORMAT
         # # ------------------------------------------------------------------------------
 
-        # # Convert pressure to match relevant KIM Property Definitions
-        # CauchyStress = [-Pressure, -Pressure, -Pressure, 0.0, 0.0, 0.0]
+        # Convert pressure to match relevant KIM Property Definitions
+        CauchyStress = [-Pressure, -Pressure, -Pressure, 0.0, 0.0, 0.0]
 
         # with open(stack_results_flnm, "w") as fstack:
 
@@ -681,18 +745,19 @@ class TestDriver(CrystalGenomeTest):
             bbox_inches="tight",
         )
 
-        output_dict = {'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
+        output_dict = {'CauchyStress': CauchyStress,
+                       'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
                        'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
-                       'GammaSurf': GammaSurf
+                       'GammaSurf': GammaSurf,
+                       'gamma_us': gamma_us,
+                       'gamma_isf': gamma_isf,
+                       'gamma_ut': gamma_ut,
+                       'gamma_esf': gamma_esf,
+                       'frac_us': frac_us,
+                       'frac_ut': frac_ut,
+                       'FracList': FracList,
+                       'SFEDList': SFEDList,
                        }
-        #               'gamma_us': gamma_us,
-        #               'gamma_isf': gamma_isf,
-        #               'gamma_ut': gamma_ut,
-        #               'gamma_esf': gamma_esf,
-        #               'frac_us': frac_us,
-        #               'frac_ut': frac_ut,
-        #               'FracList': FracList,
-        #               'SFEDList': SFEDList,
                        
         return output_dict
 
