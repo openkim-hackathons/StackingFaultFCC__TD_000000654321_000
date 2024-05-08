@@ -78,10 +78,10 @@ class TestDriver(CrystalGenomeTest):
         
 
         # assign default for FCC
-        slip_plane = "[111]"
-        slip_direction_1 = [1,1,2]
-        slip_direction_2 = [-1,1,0]
-        slip_plane_offset = 0.25
+        # slip_plane = "[111]"
+        # slip_direction_1 = [1,1,2]
+        # slip_direction_2 = [-1,1,0]
+        # slip_plane_offset = 0.25
 
         # get the necessary parameters
         latconst = self.parameter_values_angstrom[structure_index][0]
@@ -242,8 +242,8 @@ class TestDriver(CrystalGenomeTest):
         N_Twin_Layers = round(N_Layers / 2)
         Rigid_Grp_SIdx = 15
         Rigid_Grp_EIdx = 45
-        Gamma_Nx_dir1 = 50 # change this from 50 to 3 for testing
-        Gamma_Ny_dir2 = 50 # change this from 50 to 3 for testing
+        Gamma_Nx_dir1 = 20 # change this from 50 to 3 for testing
+        Gamma_Ny_dir2 = 20 # change this from 50 to 3 for testing
 
         output_dir = "./output"  # Output directory
         if not os.path.exists(output_dir):
