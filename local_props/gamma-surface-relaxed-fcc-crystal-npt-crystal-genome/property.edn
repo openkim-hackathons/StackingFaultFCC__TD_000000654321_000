@@ -5,12 +5,12 @@
 
    "property-description" "The relaxed energy-per-area versus all possible slips lying in the (111) lattice plane defines the Gamma surface. Due to periodicity of the crystal lattice, it suffices to sample a grid of points that span a*sqrt(6)/2 and a*sqrt(2)/2 along the [112] and [-110] directions, respectively. This is achieved through a sequence of rigid displacements applied to one part of an fcc crystal relative to another on the (111) plane on a grid defined by the [112] and [-110] directions at zero temperature and a specified pressure. Following each slip displacement, a relaxation of the atomic coordinates is performed in the direction perpendicular to the slip plane to arrive at the energy-per-area."
 
-   "cell-cauchy-stress" {
+   "cauchy-stress" {
         "type"         "float"
         "has-unit"     true
         "extent"       [6]
         "required"     true
-        "description"  "The [xx,yy,zz,yz,xz,xy] components of the prescribed symmetric Cauchy stress tensor. The numerical value of the stress tensor of a test result or reference data may be different due to tolerance, and can be checked by inspecting the output files of the test or the reference data description. The components should be expressed in the same coordinate system as the structure specified by prototype-label and parameter-values, with the orientation of lattice vectors defined in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017)."
+        "description"  "The [xx,yy,zz,yz,xz,xy] (i.e. [11,22,33,23,13,12]) components of the Cauchy stress acting on the crystal. The orthonormal basis used to express the stress should be aligned with the cubic 4-fold axes of the ideal crystal and the expected form of the stress tensor should be [d d d 0 0 0], where d > 0 indicates tensile stress."
   }
 
    "fault-plane-shift-fraction-110" {

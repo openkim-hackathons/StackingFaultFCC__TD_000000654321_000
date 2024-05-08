@@ -5,12 +5,12 @@
 
    "property-description" "The relaxed unstable twinning energy (UTE) for a monoatomic fcc crystal at a zero temperature and a specified pressure. The UTE corresponds to the energy barrier for rigidly slipping one part of an infinite crystal on a {111} plane adjacent to a preexisting intrinsic stacking fault relative to the other part along a <112> direction (fcc partial dislocation direction). Relaxation of the atomic coordinates is performed perpendicular to the fault plane."
 
-   "cell-cauchy-stress" {
+   "cauchy-stress" {
         "type"         "float"
         "has-unit"     true
         "extent"       [6]
         "required"     true
-        "description"  "The [xx,yy,zz,yz,xz,xy] components of the prescribed symmetric Cauchy stress tensor. The numerical value of the stress tensor of a test result or reference data may be different due to tolerance, and can be checked by inspecting the output files of the test or the reference data description. The components should be expressed in the same coordinate system as the structure specified by prototype-label and parameter-values, with the orientation of lattice vectors defined in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017)."
+        "description"  "The [xx,yy,zz,yz,xz,xy] (i.e. [11,22,33,23,13,12]) components of the Cauchy stress acting on the crystal. The orthonormal basis used to express the stress should be aligned with the cubic 4-fold axes of the ideal crystal and the expected form of the stress tensor should be [d d d 0 0 0], where d > 0 indicates tensile stress."
   }
 
    "unstable-twinning-energy" {
