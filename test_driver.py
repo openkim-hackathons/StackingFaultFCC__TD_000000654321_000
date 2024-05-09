@@ -32,6 +32,10 @@ from kim_python_utils.ase import CrystalGenomeTest
 from ase.build import bulk
 
 
+# temporary, for timer
+import time
+
+
 
 matplotlib.use("Agg")  # Use backend for non-interactive plotting
 
@@ -767,10 +771,15 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 if __name__ == "__main__":
+    time_begin = time.perf_counter()
+    
     model = 'EAM_Dynamo_AdamsFoilesWolfer_1989Universal6_Ag__MO_681640899874_000'
     atoms = bulk('Ag','fcc',a=4.089,cubic=True)
     test = TestDriver(model_name=model, atoms=atoms)
     test()
+
+    time_end = time.perf_counter()  
+    print(f"total time = {(time_end - time_begin)/60} mins")
 
     # make sure it errors out for non-FCC
     model = 'EAM_Dynamo_AcklandBaconCalder_1997_Fe__MO_142799717516_005'
