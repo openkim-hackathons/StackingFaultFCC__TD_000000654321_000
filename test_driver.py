@@ -94,7 +94,12 @@ class TestDriver(CrystalGenomeTest):
 
         # run simulations
         output_dict = self._main(model, species, latconst, Pressure = pressure)
-
+        print([f"{i} = {output_dict[i]}" for i in ['gamma_us', 
+                                                   'gamma_isf',
+                                                   'gamma_ut',
+                                                   'gamma_esf',
+                                                   'frac_us',
+                                                   'frac_ut']])
 
         ####################################################
         # PROPERTY WRITING
