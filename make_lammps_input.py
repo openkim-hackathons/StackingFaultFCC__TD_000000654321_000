@@ -133,6 +133,7 @@ def setup_problem(
    # Define a region for each  of the top N_layers/2
    variable ntwin_layers equal ${{nlat_z}}/2
 
+   # make block for each 111 plane of atoms in the twin layers
    variable i loop ${{ntwin_layers}}
    label start_of_loop_region
 
@@ -169,6 +170,9 @@ def setup_problem(
    kim interactions {Species}
    mass * 1.0
 
+   ################################################
+   ### Convert geometric regions to atom groups ### 
+
    # Rigid holding settings for each layer as a group
    variable i loop ${{ntwin_layers}}
    label start_of_loop_group
@@ -184,6 +188,8 @@ def setup_problem(
 
    # Rigid holding settings for the twinning fault group
    group twin_group region twin_region
+
+   ################################################
 
    # Variables used to rescale the energy and stress so that the quantities
    # in the thermo output are in the original metal units (eV and bars)
@@ -201,7 +207,7 @@ def setup_problem(
            v_press_metal v_pxx_metal v_pyy_metal v_pzz_metal &
            temp v_temp_metal
 
-   #dump config all atom 1000 dump.Stack
+   #dump config all atom 1000 dump_setup.Stack
 
    # Perform initial relaxation
    reset_timestep 0

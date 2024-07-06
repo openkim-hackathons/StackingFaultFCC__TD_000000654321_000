@@ -251,8 +251,8 @@ class TestDriver(CrystalGenomeTest):
         N_Twin_Layers = round(N_Layers / 2)
         Rigid_Grp_SIdx = 15
         Rigid_Grp_EIdx = 45
-        Gamma_Nx_dir1 = 20 # change this from 50 to 3 for testing
-        Gamma_Ny_dir2 = 20 # change this from 50 to 3 for testing
+        Gamma_Nx_dir1 = 20 # was 50, change this from 20 to 3 for testing
+        Gamma_Ny_dir2 = 20 # was 50, change this from 20 to 3 for testing
 
         output_dir = "./output"  # Output directory
         if not os.path.exists(output_dir):
