@@ -208,6 +208,8 @@ def setup_problem(
            temp v_temp_metal
 
    #dump config all atom 1000 dump_setup.Stack
+   #dump_modify config first yes
+
 
    # Perform initial relaxation
    reset_timestep 0
@@ -263,6 +265,10 @@ def make_stack_twin_test(stack_data_flnm):
 
    # Apply the incremental displacement until first stacking fault nucleates
    variable i loop ${{n_incr}}
+
+   dump make_stack all atom 10000 dump_make_stack_twin.Stack
+   dump_modify make_stack first yes
+
    label start_of_loop_1
 
       displace_atoms stack_group move ${{inc_x}} 0.0 0.0 units box
