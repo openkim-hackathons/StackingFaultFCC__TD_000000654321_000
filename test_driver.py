@@ -70,7 +70,8 @@ class TestDriver(CrystalGenomeTest):
     
     def _calculate(self, 
                    structure_index: int, 
-                   pressure = 0.0):
+                   pressure = 0.0,
+                   Num_layers_gamma_surf = 10):
 
         # verify with ilia:
             # where to have slip plane, dir1 and dir2, offset and pressure hard coded/input.
@@ -247,10 +248,10 @@ class TestDriver(CrystalGenomeTest):
         # -------------------------------------------------------------------------------
         #                        Program internal Constants
         # -------------------------------------------------------------------------------
-        N_Layers = 58  # No. of layers of the slip planes in the periodic cell
+        N_Layers = 10  # was 58, No. of layers of the (11-1) planes in the periodic cell
         N_Twin_Layers = round(N_Layers / 2)
-        Rigid_Grp_SIdx = 15
-        Rigid_Grp_EIdx = 45
+        Rigid_Grp_SIdx = 4 # was 15
+        Rigid_Grp_EIdx = 7 # was 45
         Gamma_Nx_dir1 = 20 # was 50, change this from 20 to 3 for testing
         Gamma_Ny_dir2 = 20 # was 50, change this from 20 to 3 for testing
 
@@ -334,6 +335,7 @@ class TestDriver(CrystalGenomeTest):
         print("***********************************************************")
         print("              COMPUTING GAMMA SURFACE                      ")
         print("***********************************************************")
+        time_gamma_start = time.perf_counter()
         with open(stack_inp_flnm, "w") as fstack:
             InpStr = setup_problem(
                 Species,
@@ -376,6 +378,8 @@ class TestDriver(CrystalGenomeTest):
         os.system("rm " + stack_data_flnm)
         os.system("rm " + stack_inp_flnm)
 
+        time_gamma_end = time.perf_counter()
+
         # ------------------------------------------------------------------------------
         #                       COMPUTE STACKING FAULT ENERGIES
         # ------------------------------------------------------------------------------
@@ -394,6 +398,7 @@ class TestDriver(CrystalGenomeTest):
             InpStr = make_stack_twin_test(stack_data_flnm)
             fstack.write(InpStr)
 
+        time_sf_coarse_start = time.perf_counter()
         # Run the LAMMPS script
         os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
@@ -426,6 +431,8 @@ class TestDriver(CrystalGenomeTest):
         # delete the output file
         os.system("rm " + stack_data_flnm)
         os.system("rm " + stack_inp_flnm)
+
+        time_sf_coarse_end = time.perf_counter()
 
         # ------------------------------------------------------------------------------
         #             Refinement to locate the unstable position - gamma_us
@@ -767,7 +774,12 @@ class TestDriver(CrystalGenomeTest):
                        'FracList': FracList,
                        'SFEDList': SFEDList,
                        }
-                       
+        
+        time_gamma = time_gamma_end - time_gamma_start
+        time_sf_coarse = time_sf_coarse_end - time_sf_coarse_start
+
+        print(f"gamma surface time = {time_gamma/60} mins")
+        print(f"time sf coarse = {time_sf_coarse/60} mins")
         return output_dict
 
 

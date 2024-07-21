@@ -273,6 +273,7 @@ def make_stack_twin_test(stack_data_flnm):
 
       displace_atoms stack_group move ${{inc_x}} 0.0 0.0 units box
       fix 2 all setforce 0 0 NULL
+      # fix 2a box/relax z {Pressure} vmax 0.01
       velocity all zero linear
       minimize 1e-25 1e-25 10000 10000
 
