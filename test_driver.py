@@ -96,7 +96,7 @@ class TestDriver(CrystalGenomeTestDriver):
         species = self.stoichiometric_species[0]
 
         # run simulations
-        output_dict = self._main(model, species, latconst, Pressure = pressure)
+        output_dict = self._main(model, species, latconst, Pressure = pressure, Num_layers_gamma_surf = Num_layers_gamma_surf)
         print([f"{i} = {output_dict[i]}" for i in ['gamma_us', 
                                                    'gamma_isf',
                                                    'gamma_ut',
@@ -187,7 +187,7 @@ class TestDriver(CrystalGenomeTestDriver):
                                                    "eV/angstrom^2")
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0.0):
+    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 10):
         # Program Parameter Variables
         LatConst_Tol = 10e-4
 
@@ -250,10 +250,15 @@ class TestDriver(CrystalGenomeTestDriver):
         # -------------------------------------------------------------------------------
         #                        Program internal Constants
         # -------------------------------------------------------------------------------
-        N_Layers = 10  # was 58, No. of layers of the (11-1) planes in the periodic cell
+        N_Layers = 58  # No. of layers of the (11-1) planes in the periodic cell
         N_Twin_Layers = round(N_Layers / 2)
-        Rigid_Grp_SIdx = 4 # was 15
-        Rigid_Grp_EIdx = 7 # was 45
+        Rigid_Grp_SIdx = 15
+        Rigid_Grp_EIdx = 45
+
+        # gamma surface specific values
+        N_Twin_Layers_gamma_surf = round(Num_layers_gamma_surf / 2)
+        Rigid_Grp_SIdx_gamma_surf = 4 # was 15
+        Rigid_Grp_EIdx_gamma_surf = 7 # was 45
         Gamma_Nx_dir1 = 20 # was 50, change this from 20 to 3 for testing
         Gamma_Ny_dir2 = 20 # was 50, change this from 20 to 3 for testing
 
@@ -342,12 +347,12 @@ class TestDriver(CrystalGenomeTestDriver):
             InpStr = setup_problem(
                 Species,
                 Model,
-                N_Layers,
+                Num_layers_gamma_surf,
                 LatConst,
                 Pressure,
-                Rigid_Grp_SIdx,
-                Rigid_Grp_EIdx,
-                N_Twin_Layers,
+                Rigid_Grp_SIdx_gamma_surf,
+                Rigid_Grp_EIdx_gamma_surf,
+                N_Twin_Layers_gamma_surf,
             )
             fstack.write(InpStr)
             InpStr = make_gammasurface_moves(stack_data_flnm, Gamma_Nx_dir1, Gamma_Ny_dir2)
