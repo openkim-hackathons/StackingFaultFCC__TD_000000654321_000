@@ -28,7 +28,9 @@ from make_lammps_input import (
 )
 
 # for Crystal Genome
-from kim_python_utils.ase import CrystalGenomeTest
+#from kim_python_utils.ase import CrystalGenomeTest
+from kim_tools import CrystalGenomeTestDriver
+#from kim_tools import get_stoich_reduced_list_from_prototype
 from ase.build import bulk
 
 
@@ -39,7 +41,7 @@ import time
 
 matplotlib.use("Agg")  # Use backend for non-interactive plotting
 
-class TestDriver(CrystalGenomeTest):
+class TestDriver(CrystalGenomeTestDriver):
     """
     Gamma surface calculation for crystal lattice
 
@@ -69,7 +71,7 @@ class TestDriver(CrystalGenomeTest):
     """
     
     def _calculate(self, 
-                   structure_index: int, 
+                   #structure_index: int, confirm w/ ilia this is legacy
                    pressure = 0.0,
                    Num_layers_gamma_surf = 10):
 
@@ -89,8 +91,8 @@ class TestDriver(CrystalGenomeTest):
         # slip_plane_offset = 0.25
 
         # get the necessary parameters
-        latconst = self.parameter_values_angstrom[structure_index][0]
-        model = self.model_name
+        latconst = self.parameter_values_angstrom[0]
+        model = self.kim_model_name
         species = self.stoichiometric_species[0]
 
         # run simulations
@@ -110,7 +112,7 @@ class TestDriver(CrystalGenomeTest):
         
         # gamma-surface
         self._add_property_instance("gamma-surface-relaxed-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=False,write_temp=False) # last two default to False
+        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
                                                    "bar")
@@ -127,7 +129,7 @@ class TestDriver(CrystalGenomeTest):
 
         # unstable-stacking-energy-fcc-crystal
         self._add_property_instance("unstable-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=False,write_temp=False) # last two default to False
+        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
                                                    "bar")
@@ -140,7 +142,7 @@ class TestDriver(CrystalGenomeTest):
 
         # intrinsic-stacking-fault-energy-fcc-crystal
         self._add_property_instance("intrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=False,write_temp=False) # last two default to False
+        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
                                                    "bar")
@@ -151,7 +153,7 @@ class TestDriver(CrystalGenomeTest):
 
         # unstable-twinning-energy-fcc-crystal
         self._add_property_instance("unstable-twinning-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=False,write_temp=False) # last two default to False
+        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
                                                    "bar")
@@ -164,7 +166,7 @@ class TestDriver(CrystalGenomeTest):
         
         # extrinsic-stacking-fault-energy-fcc-crystal
         self._add_property_instance("extrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=False,write_temp=False) # last two default to False
+        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
                                                    "bar")
@@ -174,7 +176,7 @@ class TestDriver(CrystalGenomeTest):
 
         # stacking-energy-curve-fcc-crystal
         self._add_property_instance("stacking-fault-relaxed-energy-curve-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(structure_index,write_stress=False,write_temp=False) # last two default to False
+        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
                                                    "bar")
@@ -790,16 +792,16 @@ def eprint(*args, **kwargs):
 if __name__ == "__main__":
     time_begin = time.perf_counter()
     
-    model = 'EAM_Dynamo_AdamsFoilesWolfer_1989Universal6_Ag__MO_681640899874_000'
+    kim_model_name = 'EAM_Dynamo_AdamsFoilesWolfer_1989Universal6_Ag__MO_681640899874_000'
     atoms = bulk('Ag','fcc',a=4.089,cubic=True)
-    test = TestDriver(model_name=model, atoms=atoms)
-    test()
+    test_driver = TestDriver(kim_model_name)
+    test_driver(atoms)
 
     time_end = time.perf_counter()  
     print(f"total time = {(time_end - time_begin)/60} mins")
 
     # make sure it errors out for non-FCC
-    model = 'EAM_Dynamo_AcklandBaconCalder_1997_Fe__MO_142799717516_005'
+    kim_model_name = 'EAM_Dynamo_AcklandBaconCalder_1997_Fe__MO_142799717516_005'
     atoms = bulk('Fe','bcc',a=2.866,cubic=True)
-    test = TestDriver(model_name=model, atoms=atoms)
-    test()
+    test_driver = TestDriver(kim_model_name)
+    test_driver(atoms)
