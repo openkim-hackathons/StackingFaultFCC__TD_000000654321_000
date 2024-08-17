@@ -4,7 +4,7 @@
 Invoking a Crystal Genome Test Driver Directly
 ==============================================
 """
-from test_driver import TestDriver
+from test_driver.test_driver import TestDriver
 import time
 from ase.build import bulk
 
