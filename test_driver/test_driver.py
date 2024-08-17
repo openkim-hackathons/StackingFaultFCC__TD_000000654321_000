@@ -73,7 +73,8 @@ class TestDriver(CrystalGenomeTestDriver):
     def _calculate(self, 
                    #structure_index: int, confirm w/ ilia this is legacy
                    pressure = 0.0,
-                   Num_layers_gamma_surf = 10):
+                   Num_layers_gamma_surf = 10,
+                   **kwargs):
 
         # verify with ilia:
             # where to have slip plane, dir1 and dir2, offset and pressure hard coded/input.

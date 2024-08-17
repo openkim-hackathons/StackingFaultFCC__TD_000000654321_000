@@ -1,31 +1,4 @@
-{"developer" ["8d139a3f-870c-4328-9090-4904209bc1e9"]
- "contributor-id" "8d139a3f-870c-4328-9090-4904209bc1e9"
- "description" "Intrinsic and extrinsic stacking fault energies, unstable stacking fault energy, unstable twinning energy, stacking fault energy as a function of fractional displacement, and gamma surface for a monoatomic FCC lattice at zero temperature and pressure."
- "disclaimer" "Computes all properties at zero temperature."
- "doi" "10.25950/b4cfaf9a"
- "domain" "openkim.org"
- "executables" ["runner" "test_template/runner"]
- "extended-id" "StackingFaultFccCrystal__TD_228501831190_002"
- "kim-api-version" "2.3"
- "maintainer-id" "4ad03136-ed7f-4316-b586-1e94ccceb311"
- "properties" ["tag:staff@noreply.openkim.org,2015-05-26:property/unstable-stacking-fault-relaxed-energy-fcc-crystal-npt"
-               "tag:staff@noreply.openkim.org,2015-05-26:property/intrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt"
-               "tag:staff@noreply.openkim.org,2015-05-26:property/unstable-twinning-fault-relaxed-energy-fcc-crystal-npt"
-               "tag:staff@noreply.openkim.org,2015-05-26:property/extrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt"
-               "tag:staff@noreply.openkim.org,2015-05-26:property/stacking-fault-relaxed-energy-curve-fcc-crystal-npt"
-               "tag:staff@noreply.openkim.org,2015-05-26:property/gamma-surface-relaxed-fcc-crystal-npt"]
- "publication-year" "2019"
- "simulator-name" "LAMMPS"
- "source-citations" [{"author" "Bernstein, N. and Tadmor, E. B."
-                      "doi" "10.1103/PhysRevB.69.094116"
-                      "issue" "9"
-                      "journal" "Physical Review B"
-                      "month" "Mar"
-                      "numpages" "10"
-                      "pages" "094116"
-                      "publisher" "American Physical Society"
-                      "recordkey" "TD_228501831190_002a"
-                      "recordtype" "article"
-                      "title" "Tight-binding calculations of stacking energies and twinnability in fcc metals"
-                      "volume" "69"}]
- "title" "Stacking and twinning fault energies of an fcc lattice at zero temperature and pressure v002"}
+{
+  "simulator-name" "ase"
+  "kim-api-version" "2.3"
+}
