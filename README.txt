@@ -116,9 +116,8 @@ V. Procedure (LAMMPS): For the code, see the file "make_lammps_input.py" in the 
 
 VI. Short description of various files in the test driver:
 
-   1. runner: The main script
+   1. test_driver: The main script
    2. make_lammps_input.py: Used by "runner" to generate the LAMMPS input files
-   3. dump_edn.py: Used by "runner" to dump the results in .edn format for KIM
    4. kimspec.edn: Describes the metadata associated with the Test Driver
    5. LICENSE.CDL: License document
    6. Makefile: Dummy file
@@ -126,3 +125,5 @@ VI. Short description of various files in the test driver:
 VII. Reference:
      1. Tight-binding calculations of stacking energies and twinnability in fcc
         metals, N. Bernstein and E. B. Tadmor, Phys. Rev. B 69, 094116, 2004.
+     2. S. Pattamatta, Stacking and twinning fault energies of an fcc lattice at 
+        zero temperature and pressure v002. (2019). OpenKIM. doi: 10.25950/B4CFAF9A.
