@@ -7,17 +7,9 @@ import numpy as np
 
 # Plotting libs
 import matplotlib
-from mpl_toolkits.mplot3d import Axes3D
 import pylab as plt
 from matplotlib import cm
-from matplotlib.ticker import FormatStrFormatter
 
-from dump_edn import (
-    dump_string_array,
-    dump_dbl_scalar,
-    dump_dbl_vector,
-    dump_dbl_matrix,
-)
 from make_lammps_input import (
     setup_problem,
     make_stack_twin_test,
@@ -28,16 +20,10 @@ from make_lammps_input import (
 )
 
 # for Crystal Genome
-#from kim_python_utils.ase import CrystalGenomeTest
 from kim_tools import CrystalGenomeTestDriver
-#from kim_tools import get_stoich_reduced_list_from_prototype
-from ase.build import bulk
-
 
 #for timer
 import time
-
-
 
 matplotlib.use("Agg")  # Use backend for non-interactive plotting
 
@@ -200,53 +186,6 @@ class TestDriver(CrystalGenomeTestDriver):
                 )
                 print(msg)
 
-
-        # # Read the input variables from command line (see definitions in header)
-        # Model = input("Enter the extended ID of a KIM Model:\n")
-        # if not Model:
-        #     errmsg = "Error: No KIM Model name was specified in input. Exiting..."
-        #     eprint(errmsg)
-        #     sys.exit(1)
-
-        # Species = input("Enter a chemical element:\n")
-        # if not Species:
-        #     errmsg = "Error: No atomic species was specified in input. Exiting..."
-        #     eprint(errmsg)
-        #     sys.exit(1)
-
-        # LatConst = input("Enter an FCC lattice constant (meters):\n")
-        # if not LatConst:
-        #     errmsg = "Error: No equilibrium lattice constant was specified in input. Exiting..."
-        #     eprint(errmsg)
-        #     sys.exit(1)
-        # else:
-        #     LatConst = float(LatConst)
-        #     if LatConst <= 0.0:
-        #         errmsg = "Error: Lattice constant specified must be positive. Exiting..."
-        #         eprint(errmsg)
-        #         sys.exit(1)
-
-        #     # Convert from meters to Angstroms
-        #     LatConst = LatConst * 1.0e10
-
-        # try:
-        #     Pressure = input(
-        #         "Enter a hydrostatic pressure consistent with the lattice constant above (bars):\n"
-        #     )
-        #     Pressure = float(Pressure)
-        #     if Pressure == float(0):
-        #         msg = (
-        #             "\nInfo: Pressure specified as zero in input. Forgoing lattice constant calculation and "
-        #             "proceeding with lattice constant specified.\n"
-        #         )
-        #         print(msg)
-        # except EOFError:
-        #     Pressure = None
-        #     msg = (
-        #         "\nInfo: No pressure was specified in input. Taking pressure to be equal to zero and proceeding "
-        #         "with the lattice constant specified.\n"
-        #     )
-        #     print(msg)
 
         # -------------------------------------------------------------------------------
         #                        Program internal Constants
@@ -538,138 +477,6 @@ class TestDriver(CrystalGenomeTestDriver):
         # Convert pressure to match relevant KIM Property Definitions
         CauchyStress = [-Pressure, -Pressure, -Pressure, 0.0, 0.0, 0.0]
 
-        # with open(stack_results_flnm, "w") as fstack:
-
-        #     # Global bracket
-        #     fstack.write("[\n")
-
-        #     # ----------------------------------------------------------------------------
-        #     #                  gamma-surface-relaxed-fcc-crystal-npt
-        #     # ----------------------------------------------------------------------------
-        #     # Printing Header
-        #     header = """ {
-        # "property-id" "tag:staff@noreply.openkim.org,2015-05-26:property/gamma-surface-relaxed-fcc-crystal-npt"
-        # "instance-id" 1"""
-        #     fstack.write("%s\n" % (header))
-        #     dump_string_array("species", Species, fstack)
-        #     dump_dbl_scalar("a", LatConst, fstack, "angstrom")
-        #     dump_dbl_vector("cauchy-stress", CauchyStress, fstack, "bar")
-        #     dump_dbl_vector("fault-plane-shift-fraction-112", Gamma_X_dir1_frac, fstack)
-        #     dump_dbl_vector("fault-plane-shift-fraction-110", Gamma_Y_dir2_frac, fstack)
-        #     dump_dbl_matrix("gamma-surface", GammaSurf, fstack, "eV/angstrom^2")
-        #     fstack.write(" }\n\n")
-
-        #     # ----------------------------------------------------------------------------
-        #     #                  unstable-stacking-energy-fcc-crystal
-        #     # ----------------------------------------------------------------------------
-        #     # Printing Header
-        #     header = """ {
-        # "property-id" "tag:staff@noreply.openkim.org,2015-05-26:property/unstable-stacking-fault-relaxed-energy-fcc-crystal-npt"
-        # "instance-id" 2"""
-        #     fstack.write("%s\n" % (header))
-        #     dump_string_array("species", Species, fstack)
-        #     dump_dbl_scalar("a", LatConst, fstack, "angstrom")
-        #     dump_dbl_vector("cauchy-stress", CauchyStress, fstack, "bar")
-        #     dump_dbl_scalar("unstable-stacking-energy", gamma_us, fstack, "eV/angstrom^2")
-        #     dump_dbl_scalar("unstable-slip-fraction", frac_us, fstack)
-        #     fstack.write(" }\n\n")
-
-        #     # ----------------------------------------------------------------------------
-        #     #                intrinsic-stacking-fault-energy-fcc-crystal
-        #     # ----------------------------------------------------------------------------
-        #     # Printing Header
-        #     header = """ {
-        # "property-id" "tag:staff@noreply.openkim.org,2015-05-26:property/intrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt"
-        # "instance-id" 3"""
-        #     fstack.write("%s\n" % (header))
-        #     dump_string_array("species", Species, fstack)
-        #     dump_dbl_scalar("a", LatConst, fstack, "angstrom")
-        #     dump_dbl_vector("cauchy-stress", CauchyStress, fstack, "bar")
-        #     dump_dbl_scalar("intrinsic-stacking-fault-energy", gamma_isf, fstack, "eV/angstrom^2")
-        #     fstack.write(" }\n\n")
-
-        #     # ----------------------------------------------------------------------------
-        #     #                   unstable-twinning-energy-fcc-crystal
-        #     # ----------------------------------------------------------------------------
-        #     # Printing Header
-        #     header = """ {
-        # "property-id" "tag:staff@noreply.openkim.org,2015-05-26:property/unstable-twinning-fault-relaxed-energy-fcc-crystal-npt"
-        # "instance-id" 4"""
-        #     fstack.write("%s\n" % (header))
-        #     dump_string_array("species", Species, fstack)
-        #     dump_dbl_scalar("a", LatConst, fstack, "angstrom")
-        #     dump_dbl_vector("cauchy-stress", CauchyStress, fstack, "bar")
-        #     dump_dbl_scalar("unstable-twinning-energy", gamma_ut, fstack, "eV/angstrom^2")
-        #     dump_dbl_scalar("unstable-slip-fraction", frac_ut, fstack)
-        #     fstack.write(" }\n\n")
-
-        #     # ----------------------------------------------------------------------------
-        #     #                 extrinsic-stacking-fault-energy-fcc-crystal
-        #     # ----------------------------------------------------------------------------
-        #     # Printing Header
-        #     header = """ {
-        # "property-id" "tag:staff@noreply.openkim.org,2015-05-26:property/extrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt"
-        # "instance-id" 5"""
-        #     fstack.write("%s\n" % (header))
-        #     dump_string_array("species", Species, fstack)
-        #     dump_dbl_scalar("a", LatConst, fstack, "angstrom")
-        #     dump_dbl_vector("cauchy-stress", CauchyStress, fstack, "bar")
-        #     dump_dbl_scalar("extrinsic-stacking-fault-energy", gamma_esf, fstack, "eV/angstrom^2")
-        #     fstack.write(" }\n\n")
-        #     # ----------------------------------------------------------------------------
-        #     #                     stacking-energy-curve-fcc-crystal
-        #     # ----------------------------------------------------------------------------
-        #     # Printing Header
-        #     header = """ {
-        # "property-id" "tag:staff@noreply.openkim.org,2015-05-26:property/stacking-fault-relaxed-energy-curve-fcc-crystal-npt"
-        # "instance-id" 6"""
-        #     fstack.write("%s\n" % (header))
-        #     dump_string_array("species", Species, fstack)
-        #     dump_dbl_scalar("a", LatConst, fstack, "angstrom")
-        #     dump_dbl_vector("cauchy-stress", CauchyStress, fstack, "bar")
-        #     dump_dbl_vector("fault-plane-shift-fraction", FracList, fstack)
-        #     dump_dbl_vector("fault-plane-energy", SFEDList, fstack, "eV/angstrom^2")
-        #     fstack.write(" }\n\n")
-
-        #     # Global bracket
-        #     fstack.write("]")
-
-        # # ------------------------------------------------------------------------------
-        # #        Print stacking energy curve data to file in asymptote format
-        # # ------------------------------------------------------------------------------
-        # with open(stack_data_flnm, "w") as fstack:
-        #     fstack.write("Properties = fractional_displacement    eV/A^2\n")
-        #     fstack.write("%.12f %.12f \n" % (frac_us, gamma_us))
-        #     fstack.write("%.12f %.12f \n" % (1.0, gamma_isf))
-        #     fstack.write("%.12f %.12f \n" % (frac_ut, gamma_ut))
-        #     fstack.write("%.12f %.12f \n" % (2.0, gamma_esf))
-        #     fstack.write("%d \n" % (size_0 + size_1 + size_2))
-        #     for i in range(0, size_0 + size_1 + size_2):
-        #         fstack.write("%.12f %.12f \n" % (FracList[i], SFEDList[i]))
-
-        # # ------------------------------------------------------------------------------
-        # #       Plot stacking energy curve to png and svg using matplotlib
-        # # ------------------------------------------------------------------------------
-        # plt.figure(1, (8, 6))
-        # plt.plot(FracList, SFEDList, "ro", markersize=2)
-        # plt.xlim(FracList[0], FracList[-1])
-        # plt.grid("on", linestyle="--", alpha=0.5)
-        # plt.xlabel(r"$\frac{s\,_{[112]}}{a/\sqrt{6}}$", fontsize=15)
-        # plt.ylabel("Stacking fault energy (eV/$\mathrm{\AA}^2$)")  # noqa: W605
-        # plt.savefig(
-        #     os.path.join(
-        #         output_dir,
-        #         "stacking-fault-relaxed-energy-curve-fcc-" + Species + "-" + Model + ".png",
-        #     ),
-        #     dpi=300,
-        # )
-        # plt.savefig(
-        #     os.path.join(
-        #         output_dir,
-        #         "stacking-fault-relaxed-energy-curve-fcc-" + Species + "-" + Model + ".svg",
-        #     )
-        # )
-
         # ------------------------------------------------------------------------------
         #         Plot gamma surface to png and svg using matplotlib
         # ------------------------------------------------------------------------------
@@ -689,59 +496,7 @@ class TestDriver(CrystalGenomeTestDriver):
         labelfontsize = 15
         labelpadding3d = 20
 
-        # fig = plt.figure(figsize=plt.figaspect(0.5) * 1.5)
-        # ax_3d = fig.add_subplot(projection="3d")
-        # gamma_surf = ax_3d.plot_surface(
-        #     Gamma_X_dir1_frac_grid,
-        #     Gamma_Y_dir2_frac_grid,
-        #     GammaSurf,
-        #     cmap=cm.bone,
-        #     linewidth=0,
-        #     antialiased=True,
-        #     vmin=0.0,
-        # )
-        # ax_3d.set_xlabel(label112, labelpad=labelpadding3d, fontsize=labelfontsize)
-        # ax_3d.set_ylabel(label110, labelpad=labelpadding3d, fontsize=labelfontsize)
-        # ax_3d.set_zlabel(energy_label, labelpad=10)
-
-        # ax_3d.set_xlim(0, 1)
-        # ax_3d.set_ylim(0, 1)
-        # ax_3d.tick_params(pad=7)
-
-        # ax_3d.zaxis.set_major_formatter(FormatStrFormatter("%.05f"))
-        # fig.colorbar(gamma_surf, shrink=0.65, aspect=10, pad=0.035)
-
-        # fig.tight_layout(h_pad=0.05)
-
-        # # Render at one view
-        # ax_3d.view_init(45, -135)
-        # fig.savefig(
-        #     os.path.join(
-        #         output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view1.png"
-        #     ),
-        #     dpi=300,
-        # )
-        # fig.savefig(
-        #     os.path.join(
-        #         output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view1.svg"
-        #     )
-        # )
-
-        # # Rotate and render again in a second image
-        # ax_3d.view_init(45, 135)
-        # fig.savefig(
-        #     os.path.join(
-        #         output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view2.png"
-        #     ),
-        #     dpi=300,
-        # )
-        # fig.savefig(
-        #     os.path.join(
-        #         output_dir, "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-view2.svg"
-        #     )
-        # )
-
-        # Finally, draw the 2d projection of the gamma surface
+        # Draw the 2d projection of the gamma surface
         plt.close("all")
         fig = plt.figure()
 
