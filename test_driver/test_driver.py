@@ -10,7 +10,7 @@ import matplotlib
 import pylab as plt
 from matplotlib import cm
 
-from make_lammps_input import (
+from test_driver.make_lammps_input import (
     setup_problem,
     make_stack_twin_test,
     make_refine_us,
