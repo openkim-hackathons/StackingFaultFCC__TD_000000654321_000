@@ -62,20 +62,11 @@ class TestDriver(CrystalGenomeTestDriver):
                    Num_layers_gamma_surf = 10,
                    **kwargs):
 
-        # verify with ilia:
-            # where to have slip plane, dir1 and dir2, offset and pressure hard coded/input.
-        
-        # note: don't need pressure b/c first iteration will be 0 only
+ 
         # if statement to check for FCC
         if self.prototype_label != 'A_cF4_225_a':
             raise RuntimeError('Only accepts single species FCC')
         
-
-        # assign default for FCC
-        # slip_plane = "[111]"
-        # slip_direction_1 = [1,1,2]
-        # slip_direction_2 = [-1,1,0]
-        # slip_plane_offset = 0.25
 
         # get the necessary parameters
         latconst = self.parameter_values_angstrom[0]
@@ -94,8 +85,6 @@ class TestDriver(CrystalGenomeTestDriver):
         ####################################################
         # PROPERTY WRITING
         ####################################################
-
-        # TODO: update these to latest
         
         # gamma-surface
         self._add_property_instance("gamma-surface-relaxed-fcc-crystal-npt-crystal-genome")
