@@ -12,8 +12,9 @@ from ase.build import bulk
 
 time_begin = time.perf_counter()
 
-kim_model_name = 'EAM_Dynamo_AdamsFoilesWolfer_1989Universal6_Ag__MO_681640899874_000'
-atoms = bulk('Ag','fcc',a=4.089,cubic=True)
+# default FCC test
+kim_model_name = 'EAM_Dynamo_ErcolessiAdams_1994_Al__MO_123629422045_005'
+atoms = bulk('Al','fcc',a=4.032,cubic=True)
 test_driver = TestDriver(kim_model_name)
 test_driver(atoms)
 
