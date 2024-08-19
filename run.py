@@ -8,8 +8,6 @@ from test_driver.test_driver import TestDriver
 import time
 from ase.build import bulk
 
-
-
 time_begin = time.perf_counter()
 
 # default FCC test

@@ -28,39 +28,45 @@ import time
 matplotlib.use("Agg")  # Use backend for non-interactive plotting
 
 class TestDriver(CrystalGenomeTestDriver):
+    """Intrinsic-extrinsic stacking fault and gamma surface calculation for FCC lattice
     """
-    Gamma surface calculation for crystal lattice
 
-    Description: This script computes the gamma surface energies of a general crystal. For more details, refer to README.txt
-
-    Inputs: Pressure   --> (optional) Hydrostatic pressure (bars).  If omitted, the pressure is taken to be zero.
-                            If the value specified is non-zero, the lattice constant specified for
-                            LatConst will be used to construct an initial lattice geometry for an NPT
-                            simulation carried out at the specified pressure and temperature of 1e-4
-                            Kelvin from which the actual lattice constant at the specified pressure is
-                            calculated.
-
-    Outputs: gamma_us,  frac_us         # Unstable stacking fault energy  (max)
-            gamma_isf, frac_isf = 1.0  # Intrinsic stacking fault energy (min)
-            gamma_ut,  frac_ut         # Unstable twinning fault energy  (max)
-            gamma_esf, frac_esf = 2.0  # Entrinsic stacking fault energy (min)
-            FracList  = []             # fractional displacements array
-            SFEDList  = []             # stacking fault energy densities (eV/A^2)
-            GammaSurf = []             # [frac_along_112, frac_along_110, energy (eV/A^2)] in each row
-
-    Supporting modules used:
-        make_lammps_input.py  --> Makes LAMMPS input
-        dump_edn.py           --> Dumps output in edn format
-
-    External resources used:
-        LAMMPS executable with KIM API support
-    """
     
     def _calculate(self, 
-                   #structure_index: int, confirm w/ ilia this is legacy
-                   pressure = 0.0,
-                   Num_layers_gamma_surf = 10,
+                   pressure: float = 0.0,
+                   Num_layers_gamma_surf: int = 10,
                    **kwargs):
+        """Computes the stacking fault properties of an FCC crystal. For more details, refer to README.txt
+
+        Args: 
+            pressure (float):
+                (optional) Hydrostatic pressure (bars).  If omitted, the pressure is taken to be zero.
+                If the value specified is non-zero, the lattice constant specified for
+                LatConst will be used to construct an initial lattice geometry for an NPT
+                simulation carried out at the specified pressure and temperature of 1e-4
+                Kelvin from which the actual lattice constant at the specified pressure is
+                calculated.
+
+            Num_layers_gamma_surf (int):
+                Number of layers used for gamma surface creation
+
+
+        Properties calculated: 
+                gamma_us,  frac_us         # Unstable stacking fault energy  (max)
+                gamma_isf, frac_isf = 1.0  # Intrinsic stacking fault energy (min)
+                gamma_ut,  frac_ut         # Unstable twinning fault energy  (max)
+                gamma_esf, frac_esf = 2.0  # Entrinsic stacking fault energy (min)
+                FracList  = []             # fractional displacements array
+                SFEDList  = []             # stacking fault energy densities (eV/A^2)
+                GammaSurf = []             # [frac_along_112, frac_along_110, energy (eV/A^2)] in each row
+
+        Supporting modules used:
+            make_lammps_input.py  --> Makes LAMMPS input
+            dump_edn.py           --> Dumps output in edn format
+
+        External resources used:
+            LAMMPS executable with KIM API support
+        """
 
  
         # if statement to check for FCC
