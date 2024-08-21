@@ -35,6 +35,7 @@ class TestDriver(CrystalGenomeTestDriver):
     def _calculate(self, 
                    pressure: float = 0.0,
                    Num_layers_gamma_surf: int = 10,
+                   compute_gamma_surf: bool = True,
                    **kwargs):
         """Computes the stacking fault properties of an FCC crystal. For more details, refer to README.txt
 
@@ -80,7 +81,12 @@ class TestDriver(CrystalGenomeTestDriver):
         species = self.stoichiometric_species[0]
 
         # run simulations
-        output_dict = self._main(model, species, latconst, Pressure = pressure, Num_layers_gamma_surf = Num_layers_gamma_surf)
+        output_dict = self._main(model, 
+                                 species, 
+                                 latconst, 
+                                 Pressure = pressure, 
+                                 Num_layers_gamma_surf = Num_layers_gamma_surf,
+                                 compute_gamma_surf = compute_gamma_surf)
         print([f"{i} = {output_dict[i]}" for i in ['gamma_us', 
                                                    'gamma_isf',
                                                    'gamma_ut',
@@ -93,20 +99,21 @@ class TestDriver(CrystalGenomeTestDriver):
         ####################################################
         
         # gamma-surface
-        self._add_property_instance("gamma-surface-relaxed-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
-        self._add_key_to_current_property_instance("cauchy-stress",
-                                                   output_dict['CauchyStress'],
-                                                   "bar")
-        self._add_key_to_current_property_instance("fault-plane-shift-fraction-110",
-                                                   output_dict['Gamma_Y_dir2_frac'])
-        self._add_key_to_current_property_instance("fault-plane-shift-fraction-112",
-                                                   output_dict['Gamma_X_dir1_frac'])
-        self._add_key_to_current_property_instance("gamma-surface",
-                                                   output_dict['GammaSurf'],
-                                                   "ev/angstrom^2")
-        # self._add_key_to_current_property_instance("gamma-surface-plot",
-        #                                            output_dict['gamma_surface_plot'])
+        if compute_gamma_surf == True:
+            self._add_property_instance("gamma-surface-relaxed-fcc-crystal-npt-crystal-genome")
+            self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
+            self._add_key_to_current_property_instance("cauchy-stress",
+                                                    output_dict['CauchyStress'],
+                                                    "bar")
+            self._add_key_to_current_property_instance("fault-plane-shift-fraction-110",
+                                                    output_dict['Gamma_Y_dir2_frac'])
+            self._add_key_to_current_property_instance("fault-plane-shift-fraction-112",
+                                                    output_dict['Gamma_X_dir1_frac'])
+            self._add_key_to_current_property_instance("gamma-surface",
+                                                    output_dict['GammaSurf'],
+                                                    "ev/angstrom^2")
+            # self._add_key_to_current_property_instance("gamma-surface-plot",
+            #                                            output_dict['gamma_surface_plot'])
 
 
         # unstable-stacking-energy-fcc-crystal
@@ -169,7 +176,7 @@ class TestDriver(CrystalGenomeTestDriver):
                                                    "eV/angstrom^2")
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 10):
+    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 10, compute_gamma_surf = True):
         # Program Parameter Variables
         LatConst_Tol = 10e-4
 
@@ -278,47 +285,49 @@ class TestDriver(CrystalGenomeTestDriver):
         print("              COMPUTING GAMMA SURFACE                      ")
         print("***********************************************************")
         time_gamma_start = time.perf_counter()
-        with open(stack_inp_flnm, "w") as fstack:
-            InpStr = setup_problem(
-                Species,
-                Model,
-                Num_layers_gamma_surf,
-                LatConst,
-                Pressure,
-                Rigid_Grp_SIdx_gamma_surf,
-                Rigid_Grp_EIdx_gamma_surf,
-                N_Twin_Layers_gamma_surf,
-            )
-            fstack.write(InpStr)
-            InpStr = make_gammasurface_moves(stack_data_flnm, Gamma_Nx_dir1, Gamma_Ny_dir2)
-            fstack.write(InpStr)
 
-        # Run the LAMMPS script
-        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        if compute_gamma_surf == True:
+            with open(stack_inp_flnm, "w") as fstack:
+                InpStr = setup_problem(
+                    Species,
+                    Model,
+                    Num_layers_gamma_surf,
+                    LatConst,
+                    Pressure,
+                    Rigid_Grp_SIdx_gamma_surf,
+                    Rigid_Grp_EIdx_gamma_surf,
+                    N_Twin_Layers_gamma_surf,
+                )
+                fstack.write(InpStr)
+                InpStr = make_gammasurface_moves(stack_data_flnm, Gamma_Nx_dir1, Gamma_Ny_dir2)
+                fstack.write(InpStr)
 
-        # Read the LAMMPS output file
-        """-----------------------------------------------------------------------------
-        File format: stack.dat
-        Line 1: Header
-        Line 1+1 to 1+NxPoints*NyPoints: [ 112_frac    110_frac    SFED ]
-        -----------------------------------------------------------------------------"""
-        with open(stack_data_flnm) as fstack:
-            linelist = fstack.readlines()
-            # Discard the header, index = 0
-            # Read the data into arrays
-            count = 1
-            for yIdx in range(1, Gamma_Ny_dir2 + 1):
-                temp_list_at_each_y = []
-                for xIdx in range(1, Gamma_Nx_dir1 + 1):
-                    linebuf = linelist[count].split()
-                    count = count + 1
-                    # Discard x any y coordinates
-                    temp_list_at_each_y.append(float(linebuf[2]))
-                GammaSurf.append(temp_list_at_each_y)
+            # Run the LAMMPS script
+            os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
-        # delete the output file
-        os.system("rm " + stack_data_flnm)
-        os.system("rm " + stack_inp_flnm)
+            # Read the LAMMPS output file
+            """-----------------------------------------------------------------------------
+            File format: stack.dat
+            Line 1: Header
+            Line 1+1 to 1+NxPoints*NyPoints: [ 112_frac    110_frac    SFED ]
+            -----------------------------------------------------------------------------"""
+            with open(stack_data_flnm) as fstack:
+                linelist = fstack.readlines()
+                # Discard the header, index = 0
+                # Read the data into arrays
+                count = 1
+                for yIdx in range(1, Gamma_Ny_dir2 + 1):
+                    temp_list_at_each_y = []
+                    for xIdx in range(1, Gamma_Nx_dir1 + 1):
+                        linebuf = linelist[count].split()
+                        count = count + 1
+                        # Discard x any y coordinates
+                        temp_list_at_each_y.append(float(linebuf[2]))
+                    GammaSurf.append(temp_list_at_each_y)
+
+            # delete the output file
+            os.system("rm " + stack_data_flnm)
+            os.system("rm " + stack_inp_flnm)
 
         time_gamma_end = time.perf_counter()
 
@@ -403,6 +412,7 @@ class TestDriver(CrystalGenomeTestDriver):
             InpStr = make_refine_us(SFrac_us, dFrac_us, stack_data_flnm)
             fstack.write(InpStr)
 
+        time_sf_fine_start = time.perf_counter()
         # Run the LAMMPS script
         os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
@@ -465,6 +475,8 @@ class TestDriver(CrystalGenomeTestDriver):
         if os.path.exists("kim.log"):
             os.system("rm kim.log")
 
+        time_sf_fine_end = time.perf_counter()
+
         # # ------------------------------------------------------------------------------
         # #                    PRINT FINAL OUTPUTS TO KIM EDN FORMAT
         # # ------------------------------------------------------------------------------
@@ -475,69 +487,87 @@ class TestDriver(CrystalGenomeTestDriver):
         # ------------------------------------------------------------------------------
         #         Plot gamma surface to png and svg using matplotlib
         # ------------------------------------------------------------------------------
-        # Convert data to numpy for matplotlib
-        Gamma_X_dir1_frac, Gamma_Y_dir2_frac = (
-            np.asarray(Gamma_X_dir1_frac),
-            np.asarray(Gamma_Y_dir2_frac),
-        )
-        GammaSurf = np.array(GammaSurf)
-        Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid = np.meshgrid(
-            Gamma_X_dir1_frac, Gamma_Y_dir2_frac
-        )
-
-        label112 = r"$\frac{s\,_{[112]}}{\sqrt{6}a/2}$"
-        label110 = r"$\frac{s\,_{[\mathrm{\overline{1}}10]}}{\sqrt{2}a/2}$"
-        energy_label = r"$\gamma$ (eV/$\mathrm{\AA}^2$)"
-        labelfontsize = 15
-        labelpadding3d = 20
-
-        # Draw the 2d projection of the gamma surface
-        plt.close("all")
-        fig = plt.figure()
-
-        ax_2d = fig.add_subplot()
-        projected_gamma_surf = ax_2d.pcolor(
-            Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid, GammaSurf, cmap=cm.bone
-        )
-        ax_2d.set_xlabel(label112, fontsize=labelfontsize)
-        ax_2d.set_ylabel(label110, fontsize=labelfontsize)
-        fig.colorbar(projected_gamma_surf, shrink=1, aspect=10, label=energy_label)
-        fig.subplots_adjust(bottom=0.1)
-        fig.savefig(
-            os.path.join(
-                output_dir,
-                "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.png",
-            ),
-            bbox_inches="tight",
-            dpi=300,
-        )
-        fig.savefig(
-            os.path.join(
-                output_dir,
-                "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.svg",
-            ),
-            bbox_inches="tight",
-        )
-
-        output_dict = {'CauchyStress': CauchyStress,
-                       'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
-                       'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
-                       'GammaSurf': GammaSurf,
-                       'gamma_us': gamma_us,
-                       'gamma_isf': gamma_isf,
-                       'gamma_ut': gamma_ut,
-                       'gamma_esf': gamma_esf,
-                       'frac_us': frac_us,
-                       'frac_ut': frac_ut,
-                       'FracList': FracList,
-                       'SFEDList': SFEDList,
-                       }
         
+        if compute_gamma_surf == True:
+            # Convert data to numpy for matplotlib
+            Gamma_X_dir1_frac, Gamma_Y_dir2_frac = (
+                np.asarray(Gamma_X_dir1_frac),
+                np.asarray(Gamma_Y_dir2_frac),
+            )
+            GammaSurf = np.array(GammaSurf)
+            Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid = np.meshgrid(
+                Gamma_X_dir1_frac, Gamma_Y_dir2_frac
+            )
+
+            label112 = r"$\frac{s\,_{[112]}}{\sqrt{6}a/2}$"
+            label110 = r"$\frac{s\,_{[\mathrm{\overline{1}}10]}}{\sqrt{2}a/2}$"
+            energy_label = r"$\gamma$ (eV/$\mathrm{\AA}^2$)"
+            labelfontsize = 15
+            labelpadding3d = 20
+
+            # Draw the 2d projection of the gamma surface
+            plt.close("all")
+            fig = plt.figure()
+
+            ax_2d = fig.add_subplot()
+            projected_gamma_surf = ax_2d.pcolor(
+                Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid, GammaSurf, cmap=cm.bone
+            )
+            ax_2d.set_xlabel(label112, fontsize=labelfontsize)
+            ax_2d.set_ylabel(label110, fontsize=labelfontsize)
+            fig.colorbar(projected_gamma_surf, shrink=1, aspect=10, label=energy_label)
+            fig.subplots_adjust(bottom=0.1)
+            fig.savefig(
+                os.path.join(
+                    output_dir,
+                    "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.png",
+                ),
+                bbox_inches="tight",
+                dpi=300,
+            )
+            fig.savefig(
+                os.path.join(
+                    output_dir,
+                    "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.svg",
+                ),
+                bbox_inches="tight",
+            )
+
+            output_dict = {'CauchyStress': CauchyStress,
+                        'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
+                        'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
+                        'GammaSurf': GammaSurf,
+                        'gamma_us': gamma_us,
+                        'gamma_isf': gamma_isf,
+                        'gamma_ut': gamma_ut,
+                        'gamma_esf': gamma_esf,
+                        'frac_us': frac_us,
+                        'frac_ut': frac_ut,
+                        'FracList': FracList,
+                        'SFEDList': SFEDList,
+                        }
+        
+        else:
+            output_dict = {'CauchyStress': CauchyStress,
+                        'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
+                        'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
+                        'gamma_us': gamma_us,
+                        'gamma_isf': gamma_isf,
+                        'gamma_ut': gamma_ut,
+                        'gamma_esf': gamma_esf,
+                        'frac_us': frac_us,
+                        'frac_ut': frac_ut,
+                        'FracList': FracList,
+                        'SFEDList': SFEDList,
+                        }
+
         time_gamma = time_gamma_end - time_gamma_start
         time_sf_coarse = time_sf_coarse_end - time_sf_coarse_start
+        time_sf_fine = time_sf_fine_end - time_sf_fine_start
 
         print(f"gamma surface time = {time_gamma/60} mins")
         print(f"time sf coarse = {time_sf_coarse/60} mins")
+        print(f"time sf fine = {(time_sf_fine)/60} mins")
         return output_dict
 
 

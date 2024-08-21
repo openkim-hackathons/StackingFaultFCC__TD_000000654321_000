@@ -10,11 +10,14 @@ from ase.build import bulk
 
 time_begin = time.perf_counter()
 
+# temporary, for convg study check
+compute_gamma_surf = False
+
 # default FCC test
 kim_model_name = 'EAM_Dynamo_ErcolessiAdams_1994_Al__MO_123629422045_005'
 atoms = bulk('Al','fcc',a=4.032,cubic=True)
 test_driver = TestDriver(kim_model_name)
-test_driver(atoms)
+test_driver(atoms, compute_gamma_surf = compute_gamma_surf)
 
 time_end = time.perf_counter()  
 print(f"total time = {(time_end - time_begin)/60} mins")
