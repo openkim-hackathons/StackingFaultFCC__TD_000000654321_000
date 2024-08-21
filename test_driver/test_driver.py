@@ -34,7 +34,7 @@ class TestDriver(CrystalGenomeTestDriver):
     
     def _calculate(self, 
                    pressure: float = 0.0,
-                   Num_layers_gamma_surf: int = 10,
+                   Num_layers_gamma_surf: int = 14,
                    compute_gamma_surf: bool = True,
                    **kwargs):
         """Computes the stacking fault properties of an FCC crystal. For more details, refer to README.txt
@@ -176,7 +176,7 @@ class TestDriver(CrystalGenomeTestDriver):
                                                    "eV/angstrom^2")
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 10, compute_gamma_surf = True):
+    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True):
         # Program Parameter Variables
         LatConst_Tol = 10e-4
 
@@ -192,17 +192,21 @@ class TestDriver(CrystalGenomeTestDriver):
         # -------------------------------------------------------------------------------
         #                        Program internal Constants
         # -------------------------------------------------------------------------------
-        N_Layers = 58  # No. of layers of the (11-1) planes in the periodic cell
-        N_Twin_Layers = round(N_Layers / 2)
-        Rigid_Grp_SIdx = 15
-        Rigid_Grp_EIdx = 45
+        # N_Layers = 58  # No. of layers of the (11-1) planes in the periodic cell
+        # N_Twin_Layers = round(N_Layers / 2)
+        # Rigid_Grp_SIdx = 15
+        # Rigid_Grp_EIdx = 45
+
+        (N_Layers, N_Twin_Layers, Rigid_Grp_SIdx, Rigid_Grp_EIdx) = self._layer_calc(14)
 
         # gamma surface specific values
-        N_Twin_Layers_gamma_surf = round(Num_layers_gamma_surf / 2)
-        Rigid_Grp_SIdx_gamma_surf = 4 # was 15
-        Rigid_Grp_EIdx_gamma_surf = 7 # was 45
+        # N_Twin_Layers_gamma_surf = round(Num_layers_gamma_surf / 2)
+        # Rigid_Grp_SIdx_gamma_surf = 4 # was 15
+        # Rigid_Grp_EIdx_gamma_surf = 7 # was 45
         Gamma_Nx_dir1 = 20 # was 50, change this from 20 to 3 for testing
         Gamma_Ny_dir2 = 20 # was 50, change this from 20 to 3 for testing
+
+        Num_layers_gamma_surf, N_Twin_Layers_gamma_surf, Rigid_Grp_SIdx_gamma_surf, Rigid_Grp_EIdx_gamma_surf = self._layer_calc(3)
 
         output_dir = "./output"  # Output directory
         if not os.path.exists(output_dir):
@@ -569,6 +573,13 @@ class TestDriver(CrystalGenomeTestDriver):
         print(f"time sf coarse = {time_sf_coarse/60} mins")
         print(f"time sf fine = {(time_sf_fine)/60} mins")
         return output_dict
+
+    def _layer_calc(self, i_in):
+        N_layers = 10 + (i_in - 2)*4
+        N_twin_layers = N_layers/2
+        Rigid_Grp_SIdx = i_in + 1
+        Rigid_Grp_EIdx = N_twin_layers + Rigid_Grp_SIdx - 1
+        return N_layers, N_twin_layers, Rigid_Grp_SIdx, Rigid_Grp_EIdx
 
 
 # Function for printing to stderr
