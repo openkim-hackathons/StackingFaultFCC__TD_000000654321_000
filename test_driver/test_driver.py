@@ -36,6 +36,7 @@ class TestDriver(CrystalGenomeTestDriver):
                    pressure: float = 0.0,
                    Num_layers_gamma_surf: int = 14,
                    compute_gamma_surf: bool = True,
+                   conv_cutoff: float = 0.005,
                    **kwargs):
         """Computes the stacking fault properties of an FCC crystal. For more details, refer to README.txt
 
@@ -86,7 +87,8 @@ class TestDriver(CrystalGenomeTestDriver):
                                  latconst, 
                                  Pressure = pressure, 
                                  Num_layers_gamma_surf = Num_layers_gamma_surf,
-                                 compute_gamma_surf = compute_gamma_surf)
+                                 compute_gamma_surf = compute_gamma_surf,
+                                 conv_cutoff = conv_cutoff)
         print([f"{i} = {output_dict[i]}" for i in ['gamma_us', 
                                                    'gamma_isf',
                                                    'gamma_ut',
@@ -176,7 +178,7 @@ class TestDriver(CrystalGenomeTestDriver):
                                                    "eV/angstrom^2")
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True):
+    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.005):
         # Program Parameter Variables
         LatConst_Tol = 10e-4
 
@@ -336,11 +338,15 @@ class TestDriver(CrystalGenomeTestDriver):
         time_gamma_end = time.perf_counter()
 
         # convergence study for SF energies
-        base_layer_vals = [2,3,4,5,6,7,8,9,10,11,12,13,14]
+        # base_layer_vals = [2,3,4,5,6,7,8,9,10,11,12,13,14]
         N_layers_list = []
         output_dict_list = []
         sim_time_list = []
-        for base_layer_count in base_layer_vals:
+        conv_error = 1.0
+        base_layer_count = 1
+        while conv_error > conv_cutoff:
+        #for base_layer_count in base_layer_vals:
+            base_layer_count += 1
             (N_Layers, N_Twin_Layers, Rigid_Grp_SIdx, Rigid_Grp_EIdx) = self._layer_calc(base_layer_count)#14)
 
             # ------------------------------------------------------------------------------
@@ -586,17 +592,23 @@ class TestDriver(CrystalGenomeTestDriver):
             sim_time_list.append(time_sf)
             N_layers_list.append(N_Layers)
 
-            if len(output_dict_list) > 1:
-                self._convergence_check(output_dict_list)
+            if base_layer_count == 14:
+                break
+            elif len(output_dict_list) > 1:
+                conv_error = self._convergence_check(output_dict_list)
         
+        # write convergence study results
         gamma_us_convergence = [i['gamma_us'] for i in output_dict_list]
         gamma_ut_convergence = [i['gamma_ut'] for i in output_dict_list]
 
-        print(f"N_base = {base_layer_vals}")
-        print(f"N_layers = {N_layers_list}")
-        print(f"gamma_us = {gamma_us_convergence}")
-        print(f"gamma_ut = {gamma_ut_convergence}")
-        print(f"sim_time_mins = {sim_time_list}")
+        cresults_text = f"N_layers = {N_layers_list}\n"
+        cresults_text += f"gamma_us = {gamma_us_convergence}\n"
+        cresults_text += f"gamma_ut = {gamma_ut_convergence}\n"
+        cresults_text += f"gamma_ut = {gamma_ut_convergence}\n"
+        cresults_text += f"sim_time_mins = {sim_time_list}\n"
+
+        with open("./output/conv_results.md", "w") as cresults:
+            cresults.write(cresults_text)
 
         return output_dict
 
@@ -616,7 +628,7 @@ class TestDriver(CrystalGenomeTestDriver):
         for prop in props:
             error_list.append((last[prop] - prev[prop])/prev[prop])
 
-        return
+        return max([max(error_list),abs(min(error_list))])
 
 
 # Function for printing to stderr
