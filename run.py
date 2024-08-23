@@ -11,7 +11,7 @@ from ase.build import bulk
 time_begin = time.perf_counter()
 
 # temporary, for convg study check
-compute_gamma_surf = False
+compute_gamma_surf = True
 
 # default FCC test
 kim_model_name = 'EAM_Dynamo_ErcolessiAdams_1994_Al__MO_123629422045_005'

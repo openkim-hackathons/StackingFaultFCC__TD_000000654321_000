@@ -181,6 +181,7 @@ class TestDriver(CrystalGenomeTestDriver):
     def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.005):
         # Program Parameter Variables
         LatConst_Tol = 10e-4
+        total_time_start = time.perf_counter()
 
         if Pressure == float(0):
                 msg = (
@@ -230,8 +231,6 @@ class TestDriver(CrystalGenomeTestDriver):
 
         frac_us = 0.0
         frac_ut = 0.0
-        FracList = []
-        SFEDList = []
         Gamma_X_dir1_frac = [0 + x * 1.0 / (Gamma_Nx_dir1 - 1) for x in range(Gamma_Nx_dir1)]
         Gamma_Y_dir2_frac = [0 + y * 1.0 / (Gamma_Ny_dir2 - 1) for y in range(Gamma_Ny_dir2)]
         GammaSurf = []
@@ -341,12 +340,17 @@ class TestDriver(CrystalGenomeTestDriver):
         # base_layer_vals = [2,3,4,5,6,7,8,9,10,11,12,13,14]
         N_layers_list = []
         output_dict_list = []
+        us_rough_list = []
+        ut_rough_list = []
         sim_time_list = []
+        rough_sim_time_list = []
         conv_error = 1.0
         base_layer_count = 1
         while conv_error > conv_cutoff:
-        #for base_layer_count in base_layer_vals:
             base_layer_count += 1
+        #for base_layer_count in base_layer_vals:
+            FracList = []
+            SFEDList = []
             (N_Layers, N_Twin_Layers, Rigid_Grp_SIdx, Rigid_Grp_EIdx) = self._layer_calc(base_layer_count)#14)
 
             # ------------------------------------------------------------------------------
@@ -367,7 +371,7 @@ class TestDriver(CrystalGenomeTestDriver):
                 InpStr = make_stack_twin_test(stack_data_flnm)
                 fstack.write(InpStr)
 
-            time_sf_coarse_start = time.perf_counter()
+            time_sf_rough_start = time.perf_counter()
             # Run the LAMMPS script
             os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
@@ -401,201 +405,218 @@ class TestDriver(CrystalGenomeTestDriver):
             os.system("rm " + stack_data_flnm)
             os.system("rm " + stack_inp_flnm)
 
-            time_sf_coarse_end = time.perf_counter()
+            time_sf_rough_end = time.perf_counter()
 
-            # ------------------------------------------------------------------------------
-            #             Refinement to locate the unstable position - gamma_us
-            # ------------------------------------------------------------------------------
             # Locate the unstable stacking fault energy
             us_rough_Idx, us_rough_val = max(
                 enumerate(SFEDList[0 : size_0 + size_1 - 1]), key=operator.itemgetter(1)
             )
+            us_rough_list.append(us_rough_val)
 
-            SFrac_us = FracList[us_rough_Idx - 1]
-            dFrac_us = FracList[us_rough_Idx] - FracList[us_rough_Idx - 1]
-
-            # Make input for the refinement
-            with open(stack_inp_flnm, "w") as fstack:
-                InpStr = setup_problem(
-                    Species,
-                    Model,
-                    N_Layers,
-                    LatConst,
-                    Pressure,
-                    Rigid_Grp_SIdx,
-                    Rigid_Grp_EIdx,
-                    N_Twin_Layers,
-                )
-                fstack.write(InpStr)
-                InpStr = make_refine_us(SFrac_us, dFrac_us, stack_data_flnm)
-                fstack.write(InpStr)
-
-            time_sf_fine_start = time.perf_counter()
-            # Run the LAMMPS script
-            os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
-
-            # Read the Lammps output file
-            with open(stack_data_flnm) as fstack:
-                linelist = fstack.readlines()
-                linebuf = linelist[1].split()
-                frac_us = float(linebuf[0])
-                gamma_us = float(linebuf[1])
-
-            # delete the output file
-            os.system("rm " + stack_data_flnm)
-            os.system("rm " + stack_inp_flnm)
-
-            # ------------------------------------------------------------------------------
-            #             Refinement to locate the unstable position - gamma_ut
-            # ------------------------------------------------------------------------------
             # Locate the unstable stacking fault energy
             ut_rough_Idx, ut_rough_val = max(
                 enumerate(SFEDList[size_0 + size_1 : size_0 + size_1 + size_2 - 1]),
                 key=operator.itemgetter(1),
             )
-
-            SFrac_ut = FracList[size_0 + size_1 + ut_rough_Idx - 1]
-            dFrac_ut = (
-                FracList[size_0 + size_1 + ut_rough_Idx]
-                - FracList[size_0 + size_1 + ut_rough_Idx - 1]
-            )
-
-            # Make input for the refinement
-            with open(stack_inp_flnm, "w") as fstack:
-                InpStr = setup_problem(
-                    Species,
-                    Model,
-                    N_Layers,
-                    LatConst,
-                    Pressure,
-                    Rigid_Grp_SIdx,
-                    Rigid_Grp_EIdx,
-                    N_Twin_Layers,
-                )
-                fstack.write(InpStr)
-                InpStr = make_refine_ut(SFrac_ut, dFrac_ut, stack_data_flnm)
-                fstack.write(InpStr)
-
-            # Run the LAMMPS script
-            os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
-
-            # Read the Lammps output file
-            with open(stack_data_flnm) as fstack:
-                linelist = fstack.readlines()
-                linebuf = linelist[1].split()
-                frac_ut = float(linebuf[0])
-                gamma_ut = float(linebuf[1])
-
-            # delete the output and log files
-            os.system("rm " + stack_data_flnm)
-            os.system("rm " + stack_inp_flnm)
-            os.system("rm " + stack_log_flnm)
-            if os.path.exists("kim.log"):
-                os.system("rm kim.log")
-
-            time_sf_fine_end = time.perf_counter()
-
-            # # ------------------------------------------------------------------------------
-            # #                    PRINT FINAL OUTPUTS TO KIM EDN FORMAT
-            # # ------------------------------------------------------------------------------
-
-            # Convert pressure to match relevant KIM Property Definitions
-            CauchyStress = [-Pressure, -Pressure, -Pressure, 0.0, 0.0, 0.0]
-
-            # ------------------------------------------------------------------------------
-            #         Plot gamma surface to png and svg using matplotlib
-            # ------------------------------------------------------------------------------
-            
-            if compute_gamma_surf == True:
-                # Convert data to numpy for matplotlib
-                Gamma_X_dir1_frac, Gamma_Y_dir2_frac = (
-                    np.asarray(Gamma_X_dir1_frac),
-                    np.asarray(Gamma_Y_dir2_frac),
-                )
-                GammaSurf = np.array(GammaSurf)
-                Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid = np.meshgrid(
-                    Gamma_X_dir1_frac, Gamma_Y_dir2_frac
-                )
-
-                label112 = r"$\frac{s\,_{[112]}}{\sqrt{6}a/2}$"
-                label110 = r"$\frac{s\,_{[\mathrm{\overline{1}}10]}}{\sqrt{2}a/2}$"
-                energy_label = r"$\gamma$ (eV/$\mathrm{\AA}^2$)"
-                labelfontsize = 15
-                labelpadding3d = 20
-
-                # Draw the 2d projection of the gamma surface
-                plt.close("all")
-                fig = plt.figure()
-
-                ax_2d = fig.add_subplot()
-                projected_gamma_surf = ax_2d.pcolor(
-                    Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid, GammaSurf, cmap=cm.bone
-                )
-                ax_2d.set_xlabel(label112, fontsize=labelfontsize)
-                ax_2d.set_ylabel(label110, fontsize=labelfontsize)
-                fig.colorbar(projected_gamma_surf, shrink=1, aspect=10, label=energy_label)
-                fig.subplots_adjust(bottom=0.1)
-                fig.savefig(
-                    os.path.join(
-                        output_dir,
-                        "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.png",
-                    ),
-                    bbox_inches="tight",
-                    dpi=300,
-                )
-                fig.savefig(
-                    os.path.join(
-                        output_dir,
-                        "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.svg",
-                    ),
-                    bbox_inches="tight",
-                )
-
-                output_dict = {'CauchyStress': CauchyStress,
-                            'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
-                            'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
-                            'GammaSurf': GammaSurf,
-                            'gamma_us': gamma_us,
-                            'gamma_isf': gamma_isf,
-                            'gamma_ut': gamma_ut,
-                            'gamma_esf': gamma_esf,
-                            'frac_us': frac_us,
-                            'frac_ut': frac_ut,
-                            'FracList': FracList,
-                            'SFEDList': SFEDList,
-                            }
-            
-            else:
-                output_dict = {'CauchyStress': CauchyStress,
-                            'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
-                            'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
-                            'gamma_us': gamma_us,
-                            'gamma_isf': gamma_isf,
-                            'gamma_ut': gamma_ut,
-                            'gamma_esf': gamma_esf,
-                            'frac_us': frac_us,
-                            'frac_ut': frac_ut,
-                            'FracList': FracList,
-                            'SFEDList': SFEDList,
-                            }
-
-            time_gamma = time_gamma_end - time_gamma_start
-            time_sf_coarse = time_sf_coarse_end - time_sf_coarse_start
-            time_sf_fine = time_sf_fine_end - time_sf_fine_start
-
-            print(f"gamma surface time = {time_gamma/60} mins")
-            print(f"time sf coarse = {time_sf_coarse/60} mins")
-            print(f"time sf fine = {(time_sf_fine)/60} mins")
-
-            output_dict_list.append(output_dict)
-            time_sf = (time_sf_coarse + time_sf_fine)/60
-            sim_time_list.append(time_sf)
+            ut_rough_list.append(ut_rough_val)
+            rough_sim_time_list.append(time_sf_rough_end - time_sf_rough_start)
             N_layers_list.append(N_Layers)
 
-            if base_layer_count == 14:
+            if base_layer_count == 14:  
                 break
-            elif len(output_dict_list) > 1:
-                conv_error = self._convergence_check(output_dict_list)
+            elif len(us_rough_list) > 1:
+                conv_error = self._convergence_check_rough(us_rough_list, ut_rough_list)
+
+        # ------------------------------------------------------------------------------
+        #             Refinement to locate the unstable position - gamma_us
+        # ------------------------------------------------------------------------------
+        # Locate the unstable stacking fault energy
+        us_rough_Idx, us_rough_val = max(
+            enumerate(SFEDList[0 : size_0 + size_1 - 1]), key=operator.itemgetter(1)
+        )
+
+        SFrac_us = FracList[us_rough_Idx - 1]
+        dFrac_us = FracList[us_rough_Idx] - FracList[us_rough_Idx - 1]
+
+        # Make input for the refinement
+        with open(stack_inp_flnm, "w") as fstack:
+            InpStr = setup_problem(
+                Species,
+                Model,
+                N_Layers,
+                LatConst,
+                Pressure,
+                Rigid_Grp_SIdx,
+                Rigid_Grp_EIdx,
+                N_Twin_Layers,
+            )
+            fstack.write(InpStr)
+            InpStr = make_refine_us(SFrac_us, dFrac_us, stack_data_flnm)
+            fstack.write(InpStr)
+
+        time_sf_fine_start = time.perf_counter()
+        # Run the LAMMPS script
+        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+
+        # Read the Lammps output file
+        with open(stack_data_flnm) as fstack:
+            linelist = fstack.readlines()
+            linebuf = linelist[1].split()
+            frac_us = float(linebuf[0])
+            gamma_us = float(linebuf[1])
+
+        # delete the output file
+        os.system("rm " + stack_data_flnm)
+        os.system("rm " + stack_inp_flnm)
+
+        # ------------------------------------------------------------------------------
+        #             Refinement to locate the unstable position - gamma_ut
+        # ------------------------------------------------------------------------------
+        # Locate the unstable stacking fault energy
+        ut_rough_Idx, ut_rough_val = max(
+            enumerate(SFEDList[size_0 + size_1 : size_0 + size_1 + size_2 - 1]),
+            key=operator.itemgetter(1),
+        )
+
+        SFrac_ut = FracList[size_0 + size_1 + ut_rough_Idx - 1]
+        dFrac_ut = (
+            FracList[size_0 + size_1 + ut_rough_Idx]
+            - FracList[size_0 + size_1 + ut_rough_Idx - 1]
+        )
+
+        # Make input for the refinement
+        with open(stack_inp_flnm, "w") as fstack:
+            InpStr = setup_problem(
+                Species,
+                Model,
+                N_Layers,
+                LatConst,
+                Pressure,
+                Rigid_Grp_SIdx,
+                Rigid_Grp_EIdx,
+                N_Twin_Layers,
+            )
+            fstack.write(InpStr)
+            InpStr = make_refine_ut(SFrac_ut, dFrac_ut, stack_data_flnm)
+            fstack.write(InpStr)
+
+        # Run the LAMMPS script
+        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+
+        # Read the Lammps output file
+        with open(stack_data_flnm) as fstack:
+            linelist = fstack.readlines()
+            linebuf = linelist[1].split()
+            frac_ut = float(linebuf[0])
+            gamma_ut = float(linebuf[1])
+
+        # delete the output and log files
+        os.system("rm " + stack_data_flnm)
+        os.system("rm " + stack_inp_flnm)
+        os.system("rm " + stack_log_flnm)
+        if os.path.exists("kim.log"):
+            os.system("rm kim.log")
+
+        time_sf_fine_end = time.perf_counter()
+
+        # # ------------------------------------------------------------------------------
+        # #                    PRINT FINAL OUTPUTS TO KIM EDN FORMAT
+        # # ------------------------------------------------------------------------------
+
+        # Convert pressure to match relevant KIM Property Definitions
+        CauchyStress = [-Pressure, -Pressure, -Pressure, 0.0, 0.0, 0.0]
+
+        # ------------------------------------------------------------------------------
+        #         Plot gamma surface to png and svg using matplotlib
+        # ------------------------------------------------------------------------------
+        
+        if compute_gamma_surf == True:
+            # Convert data to numpy for matplotlib
+            Gamma_X_dir1_frac, Gamma_Y_dir2_frac = (
+                np.asarray(Gamma_X_dir1_frac),
+                np.asarray(Gamma_Y_dir2_frac),
+            )
+            GammaSurf = np.array(GammaSurf)
+            Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid = np.meshgrid(
+                Gamma_X_dir1_frac, Gamma_Y_dir2_frac
+            )
+
+            label112 = r"$\frac{s\,_{[112]}}{\sqrt{6}a/2}$"
+            label110 = r"$\frac{s\,_{[\mathrm{\overline{1}}10]}}{\sqrt{2}a/2}$"
+            energy_label = r"$\gamma$ (eV/$\mathrm{\AA}^2$)"
+            labelfontsize = 15
+            labelpadding3d = 20
+
+            # Draw the 2d projection of the gamma surface
+            plt.close("all")
+            fig = plt.figure()
+
+            ax_2d = fig.add_subplot()
+            projected_gamma_surf = ax_2d.pcolor(
+                Gamma_X_dir1_frac_grid, Gamma_Y_dir2_frac_grid, GammaSurf, cmap=cm.bone
+            )
+            ax_2d.set_xlabel(label112, fontsize=labelfontsize)
+            ax_2d.set_ylabel(label110, fontsize=labelfontsize)
+            fig.colorbar(projected_gamma_surf, shrink=1, aspect=10, label=energy_label)
+            fig.subplots_adjust(bottom=0.1)
+            fig.savefig(
+                os.path.join(
+                    output_dir,
+                    "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.png",
+                ),
+                bbox_inches="tight",
+                dpi=300,
+            )
+            fig.savefig(
+                os.path.join(
+                    output_dir,
+                    "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.svg",
+                ),
+                bbox_inches="tight",
+            )
+
+            output_dict = {'CauchyStress': CauchyStress,
+                        'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
+                        'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
+                        'GammaSurf': GammaSurf,
+                        'gamma_us': gamma_us,
+                        'gamma_isf': gamma_isf,
+                        'gamma_ut': gamma_ut,
+                        'gamma_esf': gamma_esf,
+                        'frac_us': frac_us,
+                        'frac_ut': frac_ut,
+                        'FracList': FracList,
+                        'SFEDList': SFEDList,
+                        }
+        
+        else:
+            output_dict = {'CauchyStress': CauchyStress,
+                        'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
+                        'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
+                        'gamma_us': gamma_us,
+                        'gamma_isf': gamma_isf,
+                        'gamma_ut': gamma_ut,
+                        'gamma_esf': gamma_esf,
+                        'frac_us': frac_us,
+                        'frac_ut': frac_ut,
+                        'FracList': FracList,
+                        'SFEDList': SFEDList,
+                        }
+
+        time_gamma = time_gamma_end - time_gamma_start
+        time_sf_rough = time_sf_rough_end - time_sf_rough_start
+        time_sf_fine = time_sf_fine_end - time_sf_fine_start
+        total_time_end = time.perf_counter()
+
+        print(f"gamma surface time = {time_gamma/60} mins")
+        print(f"time sf rough = {time_sf_rough/60} mins")
+        print(f"time sf fine = {(time_sf_fine)/60} mins")
+
+        output_dict_list.append(output_dict)
+        time_sf = (time_sf_rough + time_sf_fine)/60
+        sim_time_list.append(time_sf)
+        
+
         
         # write convergence study results
         gamma_us_convergence = [i['gamma_us'] for i in output_dict_list]
@@ -604,8 +625,10 @@ class TestDriver(CrystalGenomeTestDriver):
         cresults_text = f"N_layers = {N_layers_list}\n"
         cresults_text += f"gamma_us = {gamma_us_convergence}\n"
         cresults_text += f"gamma_ut = {gamma_ut_convergence}\n"
-        cresults_text += f"gamma_ut = {gamma_ut_convergence}\n"
-        cresults_text += f"sim_time_mins = {sim_time_list}\n"
+        cresults_text += f"rough_us = {us_rough_list}\n"
+        cresults_text += f"rough_ut = {ut_rough_list}\n"
+        cresults_text += f"indv_rough_sim_time_seconds = {rough_sim_time_list}\n"
+        cresults_text += f"total_sim_time_seconds = {total_time_end - total_time_start}\n"
 
         with open("./output/conv_results.md", "w") as cresults:
             cresults.write(cresults_text)
@@ -628,6 +651,12 @@ class TestDriver(CrystalGenomeTestDriver):
         for prop in props:
             error_list.append((last[prop] - prev[prop])/prev[prop])
 
+        return max([max(error_list),abs(min(error_list))])
+    
+    def _convergence_check_rough(self, us_rough_list, ut_rough_list):
+        error_list = []
+        error_list.append((us_rough_list[-1]-us_rough_list[-2])/us_rough_list[-2])
+        error_list.append((ut_rough_list[-1]-ut_rough_list[-2])/ut_rough_list[-2])
         return max([max(error_list),abs(min(error_list))])
 
 
