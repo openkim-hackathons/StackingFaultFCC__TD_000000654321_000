@@ -36,7 +36,8 @@ class TestDriver(CrystalGenomeTestDriver):
                    pressure: float = 0.0,
                    Num_layers_gamma_surf: int = 14,
                    compute_gamma_surf: bool = True,
-                   conv_cutoff: float = 0.005,
+                   conv_cutoff: float = 0.01,
+                   initial_base_layer_count: int = 3,
                    **kwargs):
         """Computes the stacking fault properties of an FCC crystal. For more details, refer to README.txt
 
@@ -88,7 +89,8 @@ class TestDriver(CrystalGenomeTestDriver):
                                  Pressure = pressure, 
                                  Num_layers_gamma_surf = Num_layers_gamma_surf,
                                  compute_gamma_surf = compute_gamma_surf,
-                                 conv_cutoff = conv_cutoff)
+                                 conv_cutoff = conv_cutoff,
+                                 initial_base_layer_count = initial_base_layer_count)
         print([f"{i} = {output_dict[i]}" for i in ['gamma_us', 
                                                    'gamma_isf',
                                                    'gamma_ut',
@@ -178,9 +180,9 @@ class TestDriver(CrystalGenomeTestDriver):
                                                    "eV/angstrom^2")
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.005):
+    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3):
         # Program Parameter Variables
-        LatConst_Tol = 10e-4
+        # LatConst_Tol = 10e-4
         total_time_start = time.perf_counter()
 
         if Pressure == float(0):
@@ -337,7 +339,6 @@ class TestDriver(CrystalGenomeTestDriver):
         time_gamma_end = time.perf_counter()
 
         # convergence study for SF energies
-        # base_layer_vals = [2,3,4,5,6,7,8,9,10,11,12,13,14]
         N_layers_list = []
         output_dict_list = []
         us_rough_list = []
@@ -345,10 +346,9 @@ class TestDriver(CrystalGenomeTestDriver):
         sim_time_list = []
         rough_sim_time_list = []
         conv_error = 1.0
-        base_layer_count = 1
+        base_layer_count = initial_base_layer_count # sets layer count for initial run
         while conv_error > conv_cutoff:
             base_layer_count += 1
-        #for base_layer_count in base_layer_vals:
             FracList = []
             SFEDList = []
             (N_Layers, N_Twin_Layers, Rigid_Grp_SIdx, Rigid_Grp_EIdx) = self._layer_calc(base_layer_count)#14)
