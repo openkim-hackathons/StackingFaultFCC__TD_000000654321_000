@@ -51,7 +51,17 @@ class TestDriver(CrystalGenomeTestDriver):
                 calculated.
 
             Num_layers_gamma_surf (int):
-                Number of layers used for gamma surface creation
+                (optional) Number of layers used for gamma surface creation
+
+            compute_gamma_surf (bool):
+                (optional) Determines if gamma surface is computed.
+            
+            conv_cutoff (float):
+                (optional) Default relative error used in convergence study. Calculated using the 
+                final two simulation results.
+
+            initial_base_layer_count (int):
+                (optional) The initial number of repeating base layers used.
 
 
         Properties calculated: 
@@ -65,7 +75,6 @@ class TestDriver(CrystalGenomeTestDriver):
 
         Supporting modules used:
             make_lammps_input.py  --> Makes LAMMPS input
-            dump_edn.py           --> Dumps output in edn format
 
         External resources used:
             LAMMPS executable with KIM API support
@@ -116,8 +125,6 @@ class TestDriver(CrystalGenomeTestDriver):
             self._add_key_to_current_property_instance("gamma-surface",
                                                     output_dict['GammaSurf'],
                                                     "ev/angstrom^2")
-            # self._add_key_to_current_property_instance("gamma-surface-plot",
-            #                                            output_dict['gamma_surface_plot'])
 
 
         # unstable-stacking-energy-fcc-crystal
@@ -182,7 +189,6 @@ class TestDriver(CrystalGenomeTestDriver):
 
     def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3):
         # Program Parameter Variables
-        # LatConst_Tol = 10e-4
         total_time_start = time.perf_counter()
 
         if Pressure == float(0):
@@ -197,19 +203,8 @@ class TestDriver(CrystalGenomeTestDriver):
         # -------------------------------------------------------------------------------
         #                        Program internal Constants
         # -------------------------------------------------------------------------------
-        # N_Layers = 58  # No. of layers of the (11-1) planes in the periodic cell
-        # N_Twin_Layers = round(N_Layers / 2)
-        # Rigid_Grp_SIdx = 15
-        # Rigid_Grp_EIdx = 45
-
-
-
-        # gamma surface specific values
-        # N_Twin_Layers_gamma_surf = round(Num_layers_gamma_surf / 2)
-        # Rigid_Grp_SIdx_gamma_surf = 4 # was 15
-        # Rigid_Grp_EIdx_gamma_surf = 7 # was 45
-        Gamma_Nx_dir1 = 20 # was 50, change this from 20 to 3 for testing
-        Gamma_Ny_dir2 = 20 # was 50, change this from 20 to 3 for testing
+        Gamma_Nx_dir1 = 20
+        Gamma_Ny_dir2 = 20
 
         Num_layers_gamma_surf, N_Twin_Layers_gamma_surf, Rigid_Grp_SIdx_gamma_surf, Rigid_Grp_EIdx_gamma_surf = self._layer_calc(3)
 
@@ -220,7 +215,6 @@ class TestDriver(CrystalGenomeTestDriver):
         stack_inp_flnm = output_dir + "/stack.in"  # Input file for LAMMPS
         stack_log_flnm = output_dir + "/stack.log"  # Log file for LAMMPS
         stack_data_flnm = output_dir + "/stack.dat"  # temporary file for lammps output
-        stack_results_flnm = output_dir + "/results.edn"  # Results file in .edn format for KIM
         LAMMPS_command = "lammps"
 
         # -------------------------------------------------------------------------------
@@ -425,7 +419,7 @@ class TestDriver(CrystalGenomeTestDriver):
             if base_layer_count == 14:  
                 break
             elif len(us_rough_list) > 1:
-                conv_error = self._convergence_check_rough(us_rough_list, ut_rough_list)
+                conv_error = self._convergence_check(us_rough_list, ut_rough_list)
 
         # ------------------------------------------------------------------------------
         #             Refinement to locate the unstable position - gamma_us
@@ -545,7 +539,6 @@ class TestDriver(CrystalGenomeTestDriver):
             label110 = r"$\frac{s\,_{[\mathrm{\overline{1}}10]}}{\sqrt{2}a/2}$"
             energy_label = r"$\gamma$ (eV/$\mathrm{\AA}^2$)"
             labelfontsize = 15
-            labelpadding3d = 20
 
             # Draw the 2d projection of the gamma surface
             plt.close("all")
@@ -635,31 +628,21 @@ class TestDriver(CrystalGenomeTestDriver):
 
         return output_dict
 
+
     def _layer_calc(self, i_in):
+        """calculate layer parameters for a given base layer count
+        """
         N_layers = 10 + (i_in - 2)*4
         N_twin_layers = N_layers/2
         Rigid_Grp_SIdx = i_in + 1
         Rigid_Grp_EIdx = N_twin_layers + Rigid_Grp_SIdx - 1
         return N_layers, N_twin_layers, Rigid_Grp_SIdx, Rigid_Grp_EIdx
     
-
-    def _convergence_check(self, output_dict_list):
-        last = output_dict_list[-1]
-        prev = output_dict_list[-2]
-        props = ['gamma_us','gamma_isf','gamma_ut','gamma_esf']
-        error_list = []
-        for prop in props:
-            error_list.append((last[prop] - prev[prop])/prev[prop])
-
-        return max([max(error_list),abs(min(error_list))])
     
-    def _convergence_check_rough(self, us_rough_list, ut_rough_list):
+    def _convergence_check(self, us_rough_list, ut_rough_list):
+        """relative error check for convergence study
+        """
         error_list = []
         error_list.append((us_rough_list[-1]-us_rough_list[-2])/us_rough_list[-2])
         error_list.append((ut_rough_list[-1]-ut_rough_list[-2])/ut_rough_list[-2])
         return max([max(error_list),abs(min(error_list))])
-
-
-# Function for printing to stderr
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)

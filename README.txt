@@ -1,6 +1,8 @@
 --------------------------------------------------------------------------------
                   Intrinsic-Extrinsic stacking fault test
 --------------------------------------------------------------------------------
+This test driver and supporting files, including this README, heavily reference
+the previous test driver version [1].
 
 I. Applicability: FCC materials
 
@@ -44,7 +46,7 @@ III. Theory: Stacking faults are planar defects arising due to irregularities in
         between the intrinsic and extrinsic stacking fault configurations during the process of rigid slip explained
         in point 3. This corresponds to the barrier for nucleating a two-layer micro twin in the crystal.
 
-     6. Gamma surface: The gamma surface is created by rigid slip of a (111) plane on a grid of points defined by [112]
+     5. Gamma surface: The gamma surface is created by rigid slip of a (111) plane on a grid of points defined by [112]
         and [-110] directions in an fcc crystal at a specified pressure and temperature.  It is the energy-per-area versus
         all possible slips lying in the (111) lattice plane. Due to periodicity of the crystal lattice, it suffices to
         sample a grid of points that span  a*sqrt(6)/2 and a*sqrt(2)/2  along the [112] and [-110] directions, respectively.
@@ -54,9 +56,9 @@ III. Theory: Stacking faults are planar defects arising due to irregularities in
 IV: User Inputs:
 
     1. Extended ID of a KIM Model
-    2. An atomic species from which an FCC lattice is constructed
-    3. The zero-temperature, zero-pressure equilibrium lattice constant (meters)
-    4. Optionally, a hydrostatic pressure (bars) may be specified.  If omitted, the pressure is taken to be zero.  If a
+    2. An ASE atoms object, created using the desired atomic species and zero-temperature, zero-pressure equilibrium 
+       lattice constant (meters)
+    3. Optionally, a hydrostatic pressure (bars) may be specified.  If omitted, the pressure is taken to be zero.  If a
        non-zero value is given, the equilibrium lattice constant specified will be used to construct the initial lattice
        geometry for an NPT simulation carried out at the specified pressure and temperature of 1e-4 Kelvin, from which the
        actual lattice constant at the specified pressure is calculated.
@@ -65,42 +67,44 @@ V. Procedure (LAMMPS): For the code, see the file "make_lammps_input.py" in the 
 
    NOTE: We apply hydrostatic pressure to the system and the NPT or box/relax fixes in LAMMPS which require
          periodic boundary conditions. To create a periodic sample, we twin the crystal about the center {111} plane of
-         the periodic box, and then take a block of layers centered across this twinning plane. Now if this block of
+         the periodic box, and then take a block of layers centered across this twinning plane. If this block of
          layers is displaced in the <112> direction both the top and the bottom surfaces see the same relative motion and
          thus the same energy contribution. Hence the stacking energy per plane is exactly half of the total energy
          of the box with a stacking fault less the energy of the initial twinned crystal.
 
      Common Steps/Subroutines in LAMMPS:
 
-     P1. Create a periodic box in a slab geometry with FCC lattice stacking with 58 (11-1) layers.
+     P1. Create a periodic box in a slab geometry with FCC lattice stacking with N (11-1) layers. The number of layers is 
+         iteratively determined using a convergence study. This ensures that the existing twin plane faults and stacking fault 
+         at the edges of the periodic cell are sufficiently far from new defects being studied. A base layer count (i) is 
+         defined and used to calculate the overall layer count, N=(10+(i-2)*4).
 
-     P2. Twin the box about the center, i.e. the top 29 layers are twinned with respect to the bottom. The large number
-         of layers is required to ensure that the existing twin plane faults and stacking fault at the edges of the
-         periodic cell are sufficiently far from new defects being studied.
+     P2. Twin the box about the center, i.e. the top N/2 layers are twinned with respect to the bottom. 
 
      P3. Define groups of atoms as follows:
-          (1). stack_group containing the layers 15 to 45 (closed interval), which is centered around the middle twin
-               plane. When this block is displaced the stacking faults created are sufficiently far from the twin
+          (1). stack_group containing the layers (i+1) to ((N/2)+(i+1)-1) (closed interval), which is centered around the middle twin
                plane.
-          (2). twin_group containing the layers 16 to 44 (closed interval)
+          (2). twin_group containing the layers (i+2) to ((N/2)+(i)-1) (closed interval)
 
 
      (a). TEST: Stacking-Twinning Curve:
-        (1). Do P1 through P3 to setup the problem.
+        (1). Do P1 through P3 to setup the problem, using the initial base layer count (defined).
         (2). Displace the stack_group in the [112] direction through a/sqrt(6) in a predetermined number of increments.
         (3). Displace the twin_group in the [112] direction through a/sqrt(6) in a predetermined number of increments.
              Store the fractional displacement and the fault energy density at each incremental displacement during
-             steps (2) and (3)
+             steps (2) and (3).
+        (4). Increment base layer count (i), repeat steps (2) and (3). Calculate the relative error between runs. Terminate if
+             relative error is less than supplied convergence cutoff value.
 
      (b). TEST: Refinement of the unstable stacking fault energy.
-        (1). Do P1 through P3 to setup the problem.
+        (1). Do P1 through P3 to setup the problem, using the final value for (i) from the convergence study in test (a).
         (2). From the previously explored curve in test (a), pick the partial displacement fraction just before the
              first local maximum (unstable stacking fault energy) and displace the stack_group right up to this point.
              From this point, take incremental steps and use the bisection method moving the stack_group to
              converge on the maximum (barrier) to a specified tolerance.
 
      (c). TEST: Refinement of the unstable twinning fault energy.
-        (1). Do P1 through P3 to setup the problem.
+        (1). Do P1 through P3 to setup the problem, using the final value for (i) from the convergence study in test (a).
         (2). Displace the stack_group in the [112] direction through a/sqrt(6) thereby creating a stacking fault.
         (3). From the previously explored curve in test (a), pick the partial displacement fraction just before the
              second local maximum (call it frac_x) (unstable stacking fault energy) and displace the twin_group right
@@ -109,7 +113,8 @@ V. Procedure (LAMMPS): For the code, see the file "make_lammps_input.py" in the 
              the bisection method moving the twin_group to converge on the maximum (barrier) to a specified tolerance.
 
      (d). TEST: Gamma surface:
-        (1). Do P1 through P3 to setup the problem.
+        (1). Do P1 through P3 to setup the problem, using the supplied gamma surface value for (i). Note this is different 
+             than the value of (i) calculated in the convergence study.
         (2). Displace the stack_group in the rectangular grid defined by motions along [112] and [-110] directions
              through a*sqrt(6)/2 and a*sqrt(2)/2 respectively at some predetermined number of increments in each
              direction thereby sampling the entire grid.
@@ -122,8 +127,8 @@ VI. Short description of various files in the test driver:
    5. LICENSE.CDL: License document
    6. Makefile: Dummy file
 
-VII. Reference:
-     1. Tight-binding calculations of stacking energies and twinnability in fcc
-        metals, N. Bernstein and E. B. Tadmor, Phys. Rev. B 69, 094116, 2004.
-     2. S. Pattamatta, Stacking and twinning fault energies of an fcc lattice at 
+VII. References:
+     1. S. Pattamatta, Stacking and twinning fault energies of an fcc lattice at 
         zero temperature and pressure v002. (2019). OpenKIM. doi: 10.25950/B4CFAF9A.
+     2. Tight-binding calculations of stacking energies and twinnability in fcc
+        metals, N. Bernstein and E. B. Tadmor, Phys. Rev. B 69, 094116, 2004.
