@@ -123,9 +123,9 @@ VI. Short description of various files in the test driver:
 
    1. test_driver: The main script
    2. make_lammps_input.py: Used by "runner" to generate the LAMMPS input files
-   4. kimspec.edn: Describes the metadata associated with the Test Driver
-   5. LICENSE.CDL: License document
-   6. Makefile: Dummy file
+   3. kimspec.edn: Describes the metadata associated with the Test Driver
+   4. LICENSE.CDL: License document
+   5. Makefile: Dummy file
 
 VII. References:
      1. S. Pattamatta, Stacking and twinning fault energies of an fcc lattice at 
