@@ -266,14 +266,13 @@ def make_stack_twin_test(stack_data_flnm):
    # Apply the incremental displacement until first stacking fault nucleates
    variable i loop ${{n_incr}}
 
-   dump make_stack all atom 10000 dump_make_stack_twin.Stack
+   dump make_stack all atom 10000 ./output/dump_make_stack_twin.Stack
    dump_modify make_stack first yes
 
    label start_of_loop_1
 
       displace_atoms stack_group move ${{inc_x}} 0.0 0.0 units box
       fix 2 all setforce 0 0 NULL
-      # fix 2a box/relax z {{Pressure}} vmax 0.01 # would need to remove one set of brackets to use, plus pass pressure
       velocity all zero linear
       minimize 1e-25 1e-25 10000 10000
 
