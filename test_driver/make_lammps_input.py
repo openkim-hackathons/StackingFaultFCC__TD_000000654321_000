@@ -2,7 +2,7 @@ import textwrap
 
 
 # -------------------------------------------------------------------------------
-# make_eq_latconst: Given the pressure and initial lattice constant, makes input
+# compute_eq_latconst: Given the pressure and initial lattice constant, makes input
 #                   for the lattice constant at the given pressure
 # -------------------------------------------------------------------------------
 def compute_eq_latconst(Species, ModelName, init_LatConst, Pressure, stack_data_flnm):
