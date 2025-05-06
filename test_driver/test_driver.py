@@ -20,14 +20,14 @@ from test_driver.make_lammps_input import (
 )
 
 # for Crystal Genome
-from kim_tools import CrystalGenomeTestDriver
+from kim_tools import SingleCrystalTestDriver
 
 #for timer
 import time
 
 matplotlib.use("Agg")  # Use backend for non-interactive plotting
 
-class TestDriver(CrystalGenomeTestDriver):
+class TestDriver(SingleCrystalTestDriver):
     """Intrinsic-extrinsic stacking fault and gamma surface calculation for FCC lattice
     """
 
@@ -82,14 +82,15 @@ class TestDriver(CrystalGenomeTestDriver):
 
  
         # if statement to check for FCC
-        if self.prototype_label != 'A_cF4_225_a':
+        prototype_label = self._get_nominal_crystal_structure_npt()["prototype-label"]["source-value"]
+        if prototype_label != 'A_cF4_225_a':
             raise RuntimeError('Only accepts single species FCC')
         
 
         # get the necessary parameters
-        latconst = self.parameter_values_angstrom[0]
+        latconst = self._get_nominal_crystal_structure_npt()["a"]["source-value"]
         model = self.kim_model_name
-        species = self.stoichiometric_species[0]
+        species = self._get_nominal_crystal_structure_npt()["stoichiometric-species"]["source-value"][0]
 
         # run simulations
         output_dict = self._main(model, 
@@ -113,78 +114,96 @@ class TestDriver(CrystalGenomeTestDriver):
         
         # gamma-surface
         if compute_gamma_surf == True:
-            self._add_property_instance("gamma-surface-relaxed-fcc-crystal-npt-crystal-genome")
-            self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
+            self._add_property_instance_and_common_crystal_genome_keys(
+                property_name="gamma-surface-relaxed-fcc-crystal-npt-crystal-genome",
+                write_stress=False,
+                write_temp=False,
+            )
             self._add_key_to_current_property_instance("cauchy-stress",
                                                     output_dict['CauchyStress'],
-                                                    "bar")
+                                                    unit="bar")
             self._add_key_to_current_property_instance("fault-plane-shift-fraction-110",
                                                     output_dict['Gamma_Y_dir2_frac'])
             self._add_key_to_current_property_instance("fault-plane-shift-fraction-112",
                                                     output_dict['Gamma_X_dir1_frac'])
             self._add_key_to_current_property_instance("gamma-surface",
                                                     output_dict['GammaSurf'],
-                                                    "ev/angstrom^2")
+                                                    unit="ev/angstrom^2")
 
 
         # unstable-stacking-energy-fcc-crystal
-        self._add_property_instance("unstable-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
+        self._add_property_instance_and_common_crystal_genome_keys(
+            property_name="unstable-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome",
+            write_stress=False,
+            write_temp=False,
+        )
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
-                                                   "bar")
+                                                   unit="bar")
         self._add_key_to_current_property_instance("unstable-stacking-energy",
                                                    output_dict['gamma_us'],
-                                                   "eV/angstrom^2")
+                                                   unit="eV/angstrom^2")
         self._add_key_to_current_property_instance("unstable-slip-fraction",
                                                    output_dict["frac_us"])
 
 
         # intrinsic-stacking-fault-energy-fcc-crystal
-        self._add_property_instance("intrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
+        self._add_property_instance_and_common_crystal_genome_keys(
+            property_name="intrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome",
+            write_stress=False,
+            write_temp=False,
+        )
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
-                                                   "bar")
+                                                   unit="bar")
         self._add_key_to_current_property_instance("intrinsic-stacking-fault-energy",
                                                    output_dict['gamma_isf'],
-                                                   "eV/angstrom^2")
+                                                   unit="eV/angstrom^2")
 
 
         # unstable-twinning-energy-fcc-crystal
-        self._add_property_instance("unstable-twinning-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
+        self._add_property_instance_and_common_crystal_genome_keys(
+            property_name="unstable-twinning-fault-relaxed-energy-fcc-crystal-npt-crystal-genome",
+            write_stress=False,
+            write_temp=False,
+        )
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
-                                                   "bar")
+                                                   unit="bar")
         self._add_key_to_current_property_instance("unstable-twinning-energy",
                                                    output_dict['gamma_ut'],
-                                                   "eV/angstrom^2")
+                                                   unit="eV/angstrom^2")
         self._add_key_to_current_property_instance("unstable-slip-fraction",
                                                    output_dict['frac_ut'])
 
         
         # extrinsic-stacking-fault-energy-fcc-crystal
-        self._add_property_instance("extrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
+        self._add_property_instance_and_common_crystal_genome_keys(
+            property_name="extrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome",
+            write_stress=False,
+            write_temp=False,
+        )
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
-                                                   "bar")
+                                                   unit="bar")
         self._add_key_to_current_property_instance("extrinsic-stacking-fault-energy",
                                                    output_dict['gamma_esf'],
-                                                   "eV/angstrom^2")
+                                                   unit="eV/angstrom^2")
 
         # stacking-energy-curve-fcc-crystal
-        self._add_property_instance("stacking-fault-relaxed-energy-curve-fcc-crystal-npt-crystal-genome")
-        self._add_common_crystal_genome_keys_to_current_property_instance(write_stress=False,write_temp=False) # last two default to False
+        self._add_property_instance_and_common_crystal_genome_keys(
+            property_name="stacking-fault-relaxed-energy-curve-fcc-crystal-npt-crystal-genome",
+            write_stress=False,
+            write_temp=False,
+        )
         self._add_key_to_current_property_instance("cauchy-stress",
                                                    output_dict['CauchyStress'],
-                                                   "bar")
+                                                   unit="bar")
         self._add_key_to_current_property_instance("fault-plane-shift-fraction",
                                                    output_dict['FracList'])
         self._add_key_to_current_property_instance("fault-plane-energy",
                                                    output_dict['SFEDList'],
-                                                   "eV/angstrom^2")
+                                                   unit="eV/angstrom^2")
 
 
     def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3):
