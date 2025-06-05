@@ -2,6 +2,7 @@
 
 import sys
 import os
+import io
 import operator
 import numpy as np
 
@@ -129,6 +130,8 @@ class TestDriver(SingleCrystalTestDriver):
             self._add_key_to_current_property_instance("gamma-surface",
                                                     output_dict['GammaSurf'],
                                                     unit="ev/angstrom^2")
+            self._add_key_to_current_property_instance("gamma-surface-plot",
+                                                    output_dict['GammaSurfPlot'])                                                    
 
 
         # unstable-stacking-energy-fcc-crystal
@@ -587,10 +590,17 @@ class TestDriver(SingleCrystalTestDriver):
                 bbox_inches="tight",
             )
 
+            # save svg string buffer for export
+            svg_io = io.StringIO()
+            fig.savefig(svg_io, format='svg')
+            svg_str = svg_io.getvalue()
+            svg_io.close()
+
             output_dict = {'CauchyStress': CauchyStress,
                         'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
                         'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
                         'GammaSurf': GammaSurf,
+                        'GammaSurfPlot': svg_str,
                         'gamma_us': gamma_us,
                         'gamma_isf': gamma_isf,
                         'gamma_ut': gamma_ut,
