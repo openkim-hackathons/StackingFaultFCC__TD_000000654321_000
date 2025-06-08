@@ -130,8 +130,8 @@ class TestDriver(SingleCrystalTestDriver):
             self._add_key_to_current_property_instance("gamma-surface",
                                                     output_dict['GammaSurf'],
                                                     unit="ev/angstrom^2")
-            self._add_key_to_current_property_instance("gamma-surface-plot",
-                                                    output_dict['GammaSurfPlot'])                                                    
+            self._add_file_to_current_property_instance("gamma-surface-plot",
+                                                    f"{output_dict['GammaSurfPlotName']}.svg")
 
 
         # unstable-stacking-energy-fcc-crystal
@@ -574,10 +574,11 @@ class TestDriver(SingleCrystalTestDriver):
             ax_2d.set_ylabel(label110, fontsize=labelfontsize)
             fig.colorbar(projected_gamma_surf, shrink=1, aspect=10, label=energy_label)
             fig.subplots_adjust(bottom=0.1)
+            GammaSurfPlotName = "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.png"
             fig.savefig(
                 os.path.join(
                     output_dir,
-                    "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.png",
+                    f"{GammaSurfPlotName}.png",
                 ),
                 bbox_inches="tight",
                 dpi=300,
@@ -585,22 +586,17 @@ class TestDriver(SingleCrystalTestDriver):
             fig.savefig(
                 os.path.join(
                     output_dir,
-                    "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.svg",
+                    f"{GammaSurfPlotName}.svg",
                 ),
                 bbox_inches="tight",
             )
 
-            # save svg string buffer for export
-            svg_io = io.StringIO()
-            fig.savefig(svg_io, format='svg')
-            svg_str = svg_io.getvalue()
-            svg_io.close()
 
             output_dict = {'CauchyStress': CauchyStress,
                         'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
                         'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
                         'GammaSurf': GammaSurf,
-                        'GammaSurfPlot': svg_str,
+                        'GammaSurfPlotName': f"{output_dir}/{GammaSurfPlotName}",
                         'gamma_us': gamma_us,
                         'gamma_isf': gamma_isf,
                         'gamma_ut': gamma_ut,
