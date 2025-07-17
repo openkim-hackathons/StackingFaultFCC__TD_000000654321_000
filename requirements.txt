@@ -1,4 +1,3 @@
 kim-tools
 numpy 
 matplotlib
-pylab
