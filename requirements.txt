@@ -1,10 +1,4 @@
 kim-tools
-sys
-os
-io
-operator
 numpy 
 matplotlib
 pylab
-time
-textwrap
