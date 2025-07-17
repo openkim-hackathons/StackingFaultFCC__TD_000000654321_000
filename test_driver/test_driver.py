@@ -39,6 +39,7 @@ class TestDriver(SingleCrystalTestDriver):
                    compute_gamma_surf: bool = True,
                    conv_cutoff: float = 0.01,
                    initial_base_layer_count: int = 3,
+                   LAMMPS_command = "lmp",
                    **kwargs):
         """Computes the stacking fault properties of an FCC crystal. For more details, refer to README.txt
 
@@ -63,6 +64,9 @@ class TestDriver(SingleCrystalTestDriver):
 
             initial_base_layer_count (int):
                 (optional) The initial number of repeating base layers used.
+
+            LAMMPS_command (str):
+                (optional) The command for calling LAMMPS.
 
 
         Properties calculated: 
@@ -101,7 +105,8 @@ class TestDriver(SingleCrystalTestDriver):
                                  Num_layers_gamma_surf = Num_layers_gamma_surf,
                                  compute_gamma_surf = compute_gamma_surf,
                                  conv_cutoff = conv_cutoff,
-                                 initial_base_layer_count = initial_base_layer_count)
+                                 initial_base_layer_count = initial_base_layer_count,
+                                 LAMMPS_command = LAMMPS_command)
         print([f"{i} = {output_dict[i]}" for i in ['gamma_us', 
                                                    'gamma_isf',
                                                    'gamma_ut',
@@ -209,7 +214,7 @@ class TestDriver(SingleCrystalTestDriver):
                                                    unit="eV/angstrom^2")
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3):
+    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3, LAMMPS_command = LAMMPS_command):
         # Program Parameter Variables
         total_time_start = time.perf_counter()
 
@@ -237,7 +242,6 @@ class TestDriver(SingleCrystalTestDriver):
         stack_inp_flnm = output_dir + "/stack.in"  # Input file for LAMMPS
         stack_log_flnm = output_dir + "/stack.log"  # Log file for LAMMPS
         stack_data_flnm = output_dir + "/stack.dat"  # temporary file for lammps output
-        LAMMPS_command = "lammps"
 
         # -------------------------------------------------------------------------------
         #      Target variables to be calculated (see definitions in header)
