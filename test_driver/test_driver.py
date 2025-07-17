@@ -232,7 +232,7 @@ class TestDriver(SingleCrystalTestDriver):
 
         output_dir = "./output"  # Output directory
         if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+            os.makedirs(output_dir, exist_ok=True)
 
         stack_inp_flnm = output_dir + "/stack.in"  # Input file for LAMMPS
         stack_log_flnm = output_dir + "/stack.log"  # Log file for LAMMPS
