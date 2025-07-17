@@ -214,7 +214,7 @@ class TestDriver(SingleCrystalTestDriver):
                                                    unit="eV/angstrom^2")
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3, LAMMPS_command = LAMMPS_command):
+    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3, LAMMPS_command = "lmp"):
         # Program Parameter Variables
         total_time_start = time.perf_counter()
 
