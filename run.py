@@ -43,7 +43,7 @@ if True: # kimvv testing
 
     # Run your TD with `relaxed_structure` as the input
     test_driver = TestDriver(kim_model_name)
-    test_driver(atoms, compute_gamma_surf = compute_gamma_surf)
+    test_driver(relaxed_structure, compute_gamma_surf = compute_gamma_surf)
 
     time_end = time.perf_counter()  
     print(f"total time = {(time_end - time_begin)/60} mins")
