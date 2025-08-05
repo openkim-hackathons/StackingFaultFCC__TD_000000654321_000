@@ -121,7 +121,7 @@ class TestDriver(SingleCrystalTestDriver):
         # gamma-surface
         if compute_gamma_surf == True:
             self._add_property_instance_and_common_crystal_genome_keys(
-                property_name="gamma-surface-relaxed-fcc-crystal-npt-crystal-genome",
+                property_name="gamma-surface-relaxed-fcc-crystal-crystal-genome",
                 write_stress=False,
                 write_temp=False,
             )
@@ -141,7 +141,7 @@ class TestDriver(SingleCrystalTestDriver):
 
         # unstable-stacking-energy-fcc-crystal
         self._add_property_instance_and_common_crystal_genome_keys(
-            property_name="unstable-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome",
+            property_name="unstable-stacking-fault-relaxed-energy-fcc-crystal-crystal-genome",
             write_stress=False,
             write_temp=False,
         )
@@ -157,7 +157,7 @@ class TestDriver(SingleCrystalTestDriver):
 
         # intrinsic-stacking-fault-energy-fcc-crystal
         self._add_property_instance_and_common_crystal_genome_keys(
-            property_name="intrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome",
+            property_name="intrinsic-stacking-fault-relaxed-energy-fcc-crystal-crystal-genome",
             write_stress=False,
             write_temp=False,
         )
@@ -171,7 +171,7 @@ class TestDriver(SingleCrystalTestDriver):
 
         # unstable-twinning-energy-fcc-crystal
         self._add_property_instance_and_common_crystal_genome_keys(
-            property_name="unstable-twinning-fault-relaxed-energy-fcc-crystal-npt-crystal-genome",
+            property_name="unstable-twinning-fault-relaxed-energy-fcc-crystal-crystal-genome",
             write_stress=False,
             write_temp=False,
         )
@@ -187,7 +187,7 @@ class TestDriver(SingleCrystalTestDriver):
         
         # extrinsic-stacking-fault-energy-fcc-crystal
         self._add_property_instance_and_common_crystal_genome_keys(
-            property_name="extrinsic-stacking-fault-relaxed-energy-fcc-crystal-npt-crystal-genome",
+            property_name="extrinsic-stacking-fault-relaxed-energy-fcc-crystal-crystal-genome",
             write_stress=False,
             write_temp=False,
         )
@@ -200,7 +200,7 @@ class TestDriver(SingleCrystalTestDriver):
 
         # stacking-energy-curve-fcc-crystal
         self._add_property_instance_and_common_crystal_genome_keys(
-            property_name="stacking-fault-relaxed-energy-curve-fcc-crystal-npt-crystal-genome",
+            property_name="stacking-fault-relaxed-energy-curve-fcc-crystal-crystal-genome",
             write_stress=False,
             write_temp=False,
         )
