@@ -17,7 +17,7 @@ def compute_eq_latconst(Species, ModelName, init_LatConst, Pressure, stack_data_
    # Set neighbor skin
    variable neigh_skin equal 2.0*${{_u_distance}}
    neighbor ${{neigh_skin}} bin
-   neigh_modify one 4000      # to be tested
+   neigh_modify one 4000
 
    # Atom definition
    lattice fcc {init_LatConst}*${{_u_distance}}
@@ -100,7 +100,7 @@ def setup_problem(
    # Set neighbor skin
    variable neigh_skin equal 2.0*${{_u_distance}}
    neighbor ${{neigh_skin}} bin
-   neigh_modify one 4000   # to be tested
+   neigh_modify one 4000
 
    # Atom definition
    variable latparam_converted equal {LatConst}*${{_u_distance}}
