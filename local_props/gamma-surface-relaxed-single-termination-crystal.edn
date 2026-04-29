@@ -1,0 +1,139 @@
+{
+   "property-id" "tag:staff@noreply.openkim.org,2026-04-22:property/gamma-surface-relaxed-single-termination-crystal"
+
+   "property-title" "The relaxed gamma surface created by rigid slip of a crystal on a specified plane with only one possible termination, evaluated at zero temperature and a given pressure"
+
+   "property-description" "The relaxed excess energy-per-area relative to the unfaulted crystal, versus all possible slips lying in the specified lattice plane defines the Gamma surface. This is achieved through a sequence of rigid displacements applied to one part of the crystal relative to another on a grid on the plane defined by the crystallographic directions specified in keys 'slip-direction-1' and 'slip-direction-2' at zero temperature and a specified pressure. Following each slip displacement, a relaxation of the atomic coordinates and unit cell is performed in the direction perpendicular to the slip plane to arrive at the energy-per-area. The crystal is expressed as an AFLOW prototype label and its corresponding free parameters. Because it does not specify an offset or characterize the surface termination, this property can only be used when making the cut on any plane parallel to 'slip-direction-1' and 'slip-direction-2' results in the same Gamma surface. This includes any crystal comprised of identical atomic planes parallel to the slip plane with a constant translation and no rotations between consecutive planes. It additionally includes any crystal comprised of two alternating atomic planes parallel to the slip plane satisfying the following conditions: 1) The planes must be equispaced 2) the nth plane must be identical to the (n+2)th plane with a constant translation and no rotations 3) in an infinite stack of unit cells crossing the slip plane (before slip is introduced), there must be a line that intersects each atomic layer at a point which is the center of a 180 degree in-plane rotation symmetry for that layer. For many crystals, this property can be only used for certain slip planes but not others. In these crystals, only the lattice planes parallel to these atomic planes can be described by this property. Examples of cases where this definition is applicable include layer sliding in rhombohedral graphite or any plane in CsCl. Examples where it is not applicable include layer sliding in hexagonal graphite, as there does not exist a single translation relating the ABAB layers in this structure."
+
+  "slip-direction-1" {
+        "type"      "int"
+        "has-unit"  false
+        "extent"    [3]
+        "required"  true
+        "description" "The first crystallographic direction defining the slip plane, e.g. [-1, 1, 0]. It is expressed in terms of the conventional lattice vectors of the crystal specified by prototype-label. The conventional cell is defined as the cell of the simple lattice corresponding to the same crystal system, as listed in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017). Trigonal (incl. rhombohedral) and hexagonal crystals use the hexagonal unit cell, but the directions are still specified in generic three-index form, not the hexagonal four-index form. The direction should be reduced to its lowest integer form, i.e. the greatest common divisor of the nonzero components should be 1."
+  }
+  
+  "slip-direction-2" {
+        "type"      "int"
+        "has-unit"  false
+        "extent"    [3]
+        "required"  true
+        "description" "The second crystallographic direction defining the slip plane, e.g. [1, 1, 2]. It is expressed in terms of the conventional lattice vectors of the crystal specified by prototype-label. The conventional cell is defined as the cell of the simple lattice corresponding to the same crystal system, as listed in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017). Trigonal (incl. rhombohedral) and hexagonal crystals use the hexagonal unit cell, but the directions are still specified in generic three-index form, not the hexagonal four-index form. The direction should be reduced to its lowest integer form, i.e. the greatest common divisor of the nonzero components should be 1."
+  }
+
+   "slip-fraction-dir1" {
+       "type"         "float"
+       "has-unit"     false
+       "extent"       [":"]
+       "required"     true
+       "description"  "A list of relative fractional displacements of the crystal parts used to compute the gamma surface in the direction specified in 'slip-direction-1'. The displacement is of the positive half-plane of the crystal relative to the negative half-plane, where the positive direction forms the third coordinate axis in a right-handed coordinate system with 'slip-direction-1' and 'slip-direction-2' being the first and second axes, respectively. Each element corresponds to the relative displacement of the crystal parts as a fraction of of |h*a+k*b+l*c|, where h, k, and l are the reduced integer indices of the crystallographic direction specified in 'slip-direction-1' and a, b, and c are the conventional lattice vectors as specified in the definition of the 'slip-direction-1' key. For a simple lattice (i.e. no centering translations), this array should span [0,1) to characterize the entire gamma surface. If the lattice is nonprimitive and 'slip-direction-1' coincides with a centering translation, this array should only go up 1/N, where N is the number of centering translations required to recover a conventional lattice point (3 for rhombohedral and 2 for every other type of centered cell)."
+   }
+
+   
+   "slip-fraction-dir2" {
+       "type"         "float"
+       "has-unit"     false
+       "extent"       [":"]
+       "required"     true
+       "description"  "A list of relative fractional displacements of the two crystal parts used to compute the gamma surface in the direction specified in 'slip-direction-2'. The displacement is of the positive half-plane of the crystal relative to the negative half-plane, where the positive direction forms the third coordinate axis in a right-handed coordinate system with 'slip-direction-1' and 'slip-direction-2' being the first and second axes, respectively. Each element corresponds to the relative displacement of the two crystal parts as a fraction of of |h*a+k*b+l*c|, where h, k, and l are the reduced integer indices of the crystallographic direction specified in 'slip-direction-2' and a, b, and c are the conventional lattice vectors as specified in the definition of the 'slip-direction-2' key. For a simple lattice (i.e. no centering translations), this array should span [0,1) to characterize the entire gamma surface. If the lattice is nonprimitive and 'slip-direction-2' coincides with a centering translation, this array should only go up 1/N, where N is the number of centering translations required to recover a conventional lattice point (3 for rhombohedral and 2 for every other type of centered cell)."
+   }
+
+   "gamma-surface" {
+       "type"         "float"
+       "has-unit"     true
+       "extent"       [":",":"]
+       "required"     true
+       "description"  "The relaxed excess energy-per-area of the fault plane for a given relative displacement of the two crystal parts. All of the elements in a given sub-array contained within this array correspond to a single fractional displacement in 'slip-direction-1', but different fractional displacements in 'slip-direction-1'. That is, if each sub-array contained in this array is taken to be a column in a matrix, the rows of this matrix would correspond to the elements in 'slip-fraction-dir1' and its columns would correspond to the elements of 'slip-fraction-dir2'."
+   }
+       
+  "gamma-surface-plot" {
+       "type"         "file"
+       "has-unit"     false
+       "extent"       []
+       "required"     false
+       "description"  "Gamma surface plot"
+   }
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; END OF NPT SECTION, BELOW IS THE DESCRIPTION OF THE CRYSTAL THAT SHOULD PROBABLY BE IN EVERY
+; CRYSTAL GENOME PROPERTY DEFINITION
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  "prototype-label" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       []
+    "required"     true
+    "description"  "Prototype label (not including an enumeration suffix) as defined by the AFLOW standard (e.g. 'A_tI4_141_a') for the structure. It is expected that the alphabetically lowest of all equivalent labels is chosen."
+  }
+  "stoichiometric-species" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       [":"]
+    "required"     true
+    "description"  "Element symbols corresponding to the atom types in the stoichiometric formula which appears at the start of the prototype label (e.g. ['Mo','S'] for the AB2 stoichiometric formula, means that the 'A' atom is 'Mo' and the 'B' atom is 'S' for the MoS_2 structure)."
+  }
+  "a" {
+    "type"         "float"
+    "has-unit"     true
+    "extent"       []
+    "required"     true
+    "description"  "The equilibrium 'a' lattice constant of the crystal structure as defined by the AFLOW standard. Relative values of other lattice parameters (if present) are given in the 'parameter-values' key."
+  }
+  "parameter-names" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       [":"]
+    "required"     false
+    "description"  "Names of the parameters other than 'a', if present, corresponding to this AFLOW prototype. These can include lattice parameters from the set {'b/a','c/a','alpha','beta','gamma'} (for the conventional crystal structure defined by lattice parameters a, b, and c and angles alpha, beta, gamma), and coordinates of Wyckoff positions that have a degree of variability labeled as 'x*', 'y*' and 'z*' where the asterisk represents an integer as defined by the AFLOW standard."
+  }
+  "parameter-values" {
+    "type"         "float"
+    "has-unit"     false
+    "extent"       [":"]
+    "required"     false
+    "description"  "Equilibrium values for the parameters listed in 'parameter-names'. Note that all parameters are dimensionless."
+  }
+  "library-prototype-label" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       []
+    "required"     false
+    "description"  "The AFLOW library prototype, if any, matching the structure. Prototypes in the AFLOW library are associated with common short names used by the materials community. The library prototype includes an integer enumeration suffix defined by the AFLOW standard when there are multiple parameter values associated with the structure (e.g. 'A_tI4_141_a-001' for 'betaSn'). Because these prototype labels are named according to their original material's conventional chemical formula, they may differ from the 'prototype-label' key, which is expected to be standardized to have the alphabetically lowest possible of all equivalent labels."
+  }
+  "short-name" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       [":"]
+    "required"     false
+    "description"  "Commonly used name associated with the 'library-prototype-label' key according to the AFLOW prototype library (e.g. 'Face-Centered Cubic' or 'Molybdenite')."
+  }
+  "coordinates-file" {
+    "type"         "file"
+    "has-unit"     false
+    "extent"       []
+    "required"     false
+    "description"  "A file containing the atomic configuration including information such as the species, x,y,z coordinates of each particle, and periodicity data. This configuration is the primitive unit cell of the crystal according to the cell choice defined in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017)."
+  }
+  "coordinates-file-conventional" {
+    "type"         "file"
+    "has-unit"     false
+    "extent"       []
+    "required"     false
+    "description"  "A file containing the atomic configuration including information such as the species, x,y,z coordinates of each particle, and periodicity data. This configuration is the conventional unit cell of the crystal according to the cell choice defined in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017)."
+  }
+  "crystal-genome-source-structure-id" {
+    "type"         "string"
+    "has-unit"     false
+    "extent"       [":",":"]
+    "required"     false
+    "description"  "The identifiers (ID) of the Crystal Genome (CG) structures for which the property (test result and instance) containing this key was computed. Each element is the KIM ID of an OpenKIM Reference Data item that served as the initial configuration before it was relaxed or equilibrated with an interatomic model. Each row corresponds to a structure in the test, i.e. a test computing a property of a single crystal will only have one row, while something like a transformation between two pre-determined crystals would have two rows, and so on. Within each row, there may be multiple columns in the case when multiple initial structures converged to a single final structure during this test or one of its upstream dependencies. Because KIM Property values must be regular arrays, rows will be padded with empty strings to match the longest row."
+  }
+  "cell-cauchy-stress" {
+    "type"         "float"
+    "has-unit"     true
+    "extent"       [6]
+    "required"     true
+    "description"  "The [xx,yy,zz,yz,xz,xy] components of the prescribed symmetric Cauchy stress tensor. The numerical value of the stress tensor of a test result or reference data may be different due to tolerance, and can be checked by inspecting the output files of the test or the reference data description. The components is expressed in the same coordinate system as the structure specified by prototype-label and parameter-values, with the orientation of lattice vectors defined in M. J. Mehl et al., Comput. Mater. Sci. 136, S1 (2017)."
+  }
+}
