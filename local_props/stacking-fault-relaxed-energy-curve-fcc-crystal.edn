@@ -19,6 +19,14 @@
        "required"     true
        "description"  "A list of relative displacements of the two crystal parts used to compute the stacking energy curve. Each element corresponds to the relative displacement of the two crystal parts as a fraction of the 1/6<112> partial dislocation Burgers vector. The range 0.0 to 1.0 corresponds to the path from the ideal crystal to the intrinstic stacking, and 1.0 to 2.0 corresponds to slipping one layer above from the intrinsic stacking fault to a two-layer twin nucleus."
    }
+   "stacking-fault-relaxed-energy-curve-plot"
+   {
+       "type"         "file"
+       "has-unit"     false
+       "extent"       []
+       "required"     false
+       "description"  "Plot of 'fault-plane-energy' vs. 'fault-plane-shift-fraction'"
+   }
   "prototype-label" {
     "type"         "string"
     "has-unit"     false

@@ -17,11 +17,11 @@ from .make_lammps_input import (
     make_refine_us,
     make_refine_ut,
     make_gammasurface_moves,
-    compute_eq_latconst,
 )
 
 # for Crystal Genome
-from kim_tools import SingleCrystalTestDriver
+from kim_tools import SingleCrystalTestDriver, minimize_wrapper
+from kim_tools.symmetry_util.core import FixProvidedSymmetry
 
 #for timer
 import time
@@ -34,39 +34,26 @@ class TestDriver(SingleCrystalTestDriver):
 
     
     def _calculate(self, 
-                   pressure: float = 0.0,
-                   Num_layers_gamma_surf: int = 14,
+                   num_layers_gamma_surf: int = 14,
                    compute_gamma_surf: bool = True,
                    conv_cutoff: float = 0.01,
                    initial_base_layer_count: int = 3,
-                   LAMMPS_command = "lmp",
+                   lammps_command = "lmp",
                    **kwargs):
         """Computes the stacking fault properties of an FCC crystal. For more details, refer to README.txt
 
-        Args: 
-            pressure (float):
-                (optional) Hydrostatic pressure (bars).  If omitted, the pressure is taken to be zero.
-                If the value specified is non-zero, the lattice constant specified for
-                LatConst will be used to construct an initial lattice geometry for an NPT
-                simulation carried out at the specified pressure and temperature of 1e-4
-                Kelvin from which the actual lattice constant at the specified pressure is
-                calculated.
-
-            Num_layers_gamma_surf (int):
-                (optional) Number of layers used for gamma surface creation
-
-            compute_gamma_surf (bool):
-                (optional) Determines if gamma surface is computed.
-            
-            conv_cutoff (float):
-                (optional) Default relative error used in convergence study. Calculated using the 
+        Args:
+            num_layers_gamma_surf:
+                Number of layers used for gamma surface creation
+            compute_gamma_surf:
+                Determines if gamma surface is computed.
+            conv_cutoff:
+                Default relative error used in convergence study. Calculated using the
                 final two simulation results.
-
-            initial_base_layer_count (int):
-                (optional) The initial number of repeating base layers used.
-
-            LAMMPS_command (str):
-                (optional) The command for calling LAMMPS.
+            initial_base_layer_count:
+                The initial number of repeating base layers used.
+            lammps_command:
+                The command for calling LAMMPS.
 
 
         Properties calculated: 
@@ -91,6 +78,18 @@ class TestDriver(SingleCrystalTestDriver):
         if prototype_label != 'A_cF4_225_a':
             raise RuntimeError('Only accepts single species FCC')
         
+        # If finite pressure, relax given said pressure and update variables
+        atoms = self._get_atoms()
+        sgnum = self.get_nominal_space_group_number()
+        flt_kwargs = {
+            "scalar_pressure": self._get_pressure(enforce_hydrostatic=True)
+        }
+        minimize_wrapper(
+            atoms,
+            fix_symmetry=FixProvidedSymmetry(atoms, sgnum),
+            flt_kwargs=flt_kwargs
+            )
+        self._update_nominal_parameter_values(atoms)
 
         # get the necessary parameters
         latconst = self._get_nominal_crystal_structure_npt()["a"]["source-value"]
@@ -101,12 +100,12 @@ class TestDriver(SingleCrystalTestDriver):
         output_dict = self._main(model, 
                                  species, 
                                  latconst, 
-                                 Pressure = pressure, 
-                                 Num_layers_gamma_surf = Num_layers_gamma_surf,
+                                 pressure = self._get_pressure(unit="bar", enforce_hydrostatic=True), 
+                                 num_layers_gamma_surf = num_layers_gamma_surf,
                                  compute_gamma_surf = compute_gamma_surf,
                                  conv_cutoff = conv_cutoff,
                                  initial_base_layer_count = initial_base_layer_count,
-                                 LAMMPS_command = LAMMPS_command)
+                                 lammps_command = lammps_command)
         print([f"{i} = {output_dict[i]}" for i in ['gamma_us', 
                                                    'gamma_isf',
                                                    'gamma_ut',
@@ -121,22 +120,25 @@ class TestDriver(SingleCrystalTestDriver):
         # gamma-surface
         if compute_gamma_surf == True:
             self._add_property_instance_and_common_crystal_genome_keys(
-                property_name="gamma-surface-relaxed-fcc-crystal",
+                property_name="gamma-surface-relaxed-single-termination-crystal",
                 write_stress=True,
                 write_temp=False,
             )
-            self._add_key_to_current_property_instance("cauchy-stress",
-                                                    output_dict['CauchyStress'],
-                                                    unit="bar")
-            self._add_key_to_current_property_instance("fault-plane-shift-fraction-110",
-                                                    output_dict['Gamma_Y_dir2_frac'])
-            self._add_key_to_current_property_instance("fault-plane-shift-fraction-112",
-                                                    output_dict['Gamma_X_dir1_frac'])
+            self._add_key_to_current_property_instance("slip-direction-1", [1, 1, 2])
+            self._add_key_to_current_property_instance("slip-direction-2", [-1, 1, 0])
+
+            # Both directions hit a face lattice point in FCC, so they only go
+            # up to 1/2 of the slip fraction of the conventional
+            # cell as defined in the property definition            
+            self._add_key_to_current_property_instance("slip-fraction-dir1",
+                                                    np.array(output_dict['Gamma_X_dir1_frac'])/2)
+            self._add_key_to_current_property_instance("slip-fraction-dir2",
+                                                    np.array(output_dict['Gamma_Y_dir2_frac'])/2)
             self._add_key_to_current_property_instance("gamma-surface",
                                                     output_dict['GammaSurf'],
                                                     unit="ev/angstrom^2")
             self._add_file_to_current_property_instance("gamma-surface-plot",
-                                                    f"{output_dict['GammaSurfPlotName']}.svg")
+                                                    output_dict['GammaSurfPlotName'])
 
 
         # unstable-stacking-energy-fcc-crystal
@@ -145,9 +147,6 @@ class TestDriver(SingleCrystalTestDriver):
             write_stress=True,
             write_temp=False,
         )
-        self._add_key_to_current_property_instance("cauchy-stress",
-                                                   output_dict['CauchyStress'],
-                                                   unit="bar")
         self._add_key_to_current_property_instance("unstable-stacking-energy",
                                                    output_dict['gamma_us'],
                                                    unit="eV/angstrom^2")
@@ -161,9 +160,6 @@ class TestDriver(SingleCrystalTestDriver):
             write_stress=True,
             write_temp=False,
         )
-        self._add_key_to_current_property_instance("cauchy-stress",
-                                                   output_dict['CauchyStress'],
-                                                   unit="bar")
         self._add_key_to_current_property_instance("intrinsic-stacking-fault-energy",
                                                    output_dict['gamma_isf'],
                                                    unit="eV/angstrom^2")
@@ -175,9 +171,6 @@ class TestDriver(SingleCrystalTestDriver):
             write_stress=True,
             write_temp=False,
         )
-        self._add_key_to_current_property_instance("cauchy-stress",
-                                                   output_dict['CauchyStress'],
-                                                   unit="bar")
         self._add_key_to_current_property_instance("unstable-twinning-energy",
                                                    output_dict['gamma_ut'],
                                                    unit="eV/angstrom^2")
@@ -191,9 +184,6 @@ class TestDriver(SingleCrystalTestDriver):
             write_stress=True,
             write_temp=False,
         )
-        self._add_key_to_current_property_instance("cauchy-stress",
-                                                   output_dict['CauchyStress'],
-                                                   unit="bar")
         self._add_key_to_current_property_instance("extrinsic-stacking-fault-energy",
                                                    output_dict['gamma_esf'],
                                                    unit="eV/angstrom^2")
@@ -204,28 +194,19 @@ class TestDriver(SingleCrystalTestDriver):
             write_stress=True,
             write_temp=False,
         )
-        self._add_key_to_current_property_instance("cauchy-stress",
-                                                   output_dict['CauchyStress'],
-                                                   unit="bar")
         self._add_key_to_current_property_instance("fault-plane-shift-fraction",
                                                    output_dict['FracList'])
         self._add_key_to_current_property_instance("fault-plane-energy",
                                                    output_dict['SFEDList'],
                                                    unit="eV/angstrom^2")
+        self._add_file_to_current_property_instance(
+            "stacking-fault-relaxed-energy-curve-plot", output_dict['stackingFaultPlotName']
+        )
 
 
-    def _main(self, Model, Species, LatConst, Pressure = 0.0, Num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3, LAMMPS_command = "lmp"):
+    def _main(self, model, species, latConst, pressure = 0.0, num_layers_gamma_surf = 14, compute_gamma_surf = True, conv_cutoff = 0.01, initial_base_layer_count = 3, lammps_command = "lmp"):
         # Program Parameter Variables
         total_time_start = time.perf_counter()
-
-        if Pressure == float(0):
-                msg = (
-                    "\nInfo: Pressure was either specified as zero in input or not provided. "
-                    "Forgoing lattice constant calculation and "
-                    "proceeding with lattice constant specified.\n"
-                )
-                print(msg)
-
 
         # -------------------------------------------------------------------------------
         #                        Program internal Constants
@@ -233,7 +214,7 @@ class TestDriver(SingleCrystalTestDriver):
         Gamma_Nx_dir1 = 20
         Gamma_Ny_dir2 = 20
 
-        Num_layers_gamma_surf, N_Twin_Layers_gamma_surf, Rigid_Grp_SIdx_gamma_surf, Rigid_Grp_EIdx_gamma_surf = self._layer_calc(3)
+        num_layers_gamma_surf, N_Twin_Layers_gamma_surf, Rigid_Grp_SIdx_gamma_surf, Rigid_Grp_EIdx_gamma_surf = self._layer_calc(3)
 
         output_dir = "./output"  # Output directory
         if not os.path.exists(output_dir):
@@ -257,54 +238,6 @@ class TestDriver(SingleCrystalTestDriver):
         Gamma_Y_dir2_frac = [0 + y * 1.0 / (Gamma_Ny_dir2 - 1) for y in range(Gamma_Ny_dir2)]
         GammaSurf = []
 
-        if not Pressure:
-            # ------------------------------------------------------------------------------
-            #                            CASE I - ZERO PRESSURE
-            # Either no pressure was specified, or a pressure of zero was specified.
-            # Proceed by constructing the FCC lattice using the equilibrium lattice
-            # constant given and forming the stacking faults, etc.
-            # ------------------------------------------------------------------------------
-            Pressure = 0.0
-
-        else:
-            # ------------------------------------------------------------------------------
-            #                         CASE II - NON-ZERO PRESSURE
-            # Use the zero-temperature, zero-pressure equilibrium lattice constant
-            # specified in the input to construct the initial FCC lattice for an NPT
-            # simulation at 1e-4K and the specified pressure.  After 200,000 timesteps, the
-            # length of the supercell along the x direction is parsed from the output and
-            # divided by the number of conventional FCC cells along that direction to
-            # arrive at the equilibrium lattice constant at the specified pressure.  This
-            # lattice constant is then used to construct the lattice geometry for the
-            # actual stacking fault calculations.
-            # ------------------------------------------------------------------------------
-            print(
-                "Info: A non-zero pressure of %r bar was specified. Computing the corresponding "
-                "FCC lattice constant...\n" % Pressure
-            )
-            with open(stack_inp_flnm, "w") as fstack:
-                InpStr = compute_eq_latconst(
-                    Species, Model, LatConst, Pressure, stack_data_flnm
-                )
-                fstack.write(InpStr)
-
-            # Run the LAMMPS script
-            os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
-
-            # Read the LAMMPS output file for the lattice constant
-            with open(stack_data_flnm) as fstack:
-                linelist = fstack.readlines()
-                linebuf = linelist[0].split()
-                LatConst = float(linebuf[0])
-
-            # delete the output file
-            os.system("rm " + stack_data_flnm)
-            os.system("rm " + stack_inp_flnm)
-            print(
-                "Info: Calculated an FCC lattice constant of %r corresponding to pressure %r\n"
-                % (LatConst, Pressure)
-            )
-
         # ------------------------------------------------------------------------------
         #                            COMPUTE GAMMMA SURFACE
         # ------------------------------------------------------------------------------
@@ -316,11 +249,11 @@ class TestDriver(SingleCrystalTestDriver):
         if compute_gamma_surf == True:
             with open(stack_inp_flnm, "w") as fstack:
                 InpStr = setup_problem(
-                    Species,
-                    Model,
-                    Num_layers_gamma_surf,
-                    LatConst,
-                    Pressure,
+                    species,
+                    model,
+                    num_layers_gamma_surf,
+                    latConst,
+                    pressure,
                     Rigid_Grp_SIdx_gamma_surf,
                     Rigid_Grp_EIdx_gamma_surf,
                     N_Twin_Layers_gamma_surf,
@@ -330,7 +263,7 @@ class TestDriver(SingleCrystalTestDriver):
                 fstack.write(InpStr)
 
             # Run the LAMMPS script
-            os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+            os.system(lammps_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
             # Read the LAMMPS output file
             """-----------------------------------------------------------------------------
@@ -378,11 +311,11 @@ class TestDriver(SingleCrystalTestDriver):
             # ------------------------------------------------------------------------------
             with open(stack_inp_flnm, "w") as fstack:
                 InpStr = setup_problem(
-                    Species,
-                    Model,
+                    species,
+                    model,
                     N_Layers,
-                    LatConst,
-                    Pressure,
+                    latConst,
+                    pressure,
                     Rigid_Grp_SIdx,
                     Rigid_Grp_EIdx,
                     N_Twin_Layers,
@@ -393,7 +326,7 @@ class TestDriver(SingleCrystalTestDriver):
 
             time_sf_rough_start = time.perf_counter()
             # Run the LAMMPS script
-            os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+            os.system(lammps_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
             # Read the LAMMPS output file
             """-----------------------------------------------------------------------------
@@ -461,11 +394,11 @@ class TestDriver(SingleCrystalTestDriver):
         # Make input for the refinement
         with open(stack_inp_flnm, "w") as fstack:
             InpStr = setup_problem(
-                Species,
-                Model,
+                species,
+                model,
                 N_Layers,
-                LatConst,
-                Pressure,
+                latConst,
+                pressure,
                 Rigid_Grp_SIdx,
                 Rigid_Grp_EIdx,
                 N_Twin_Layers,
@@ -476,7 +409,7 @@ class TestDriver(SingleCrystalTestDriver):
 
         time_sf_fine_start = time.perf_counter()
         # Run the LAMMPS script
-        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        os.system(lammps_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
         # Read the Lammps output file
         with open(stack_data_flnm) as fstack:
@@ -507,11 +440,11 @@ class TestDriver(SingleCrystalTestDriver):
         # Make input for the refinement
         with open(stack_inp_flnm, "w") as fstack:
             InpStr = setup_problem(
-                Species,
-                Model,
+                species,
+                model,
                 N_Layers,
-                LatConst,
-                Pressure,
+                latConst,
+                pressure,
                 Rigid_Grp_SIdx,
                 Rigid_Grp_EIdx,
                 N_Twin_Layers,
@@ -521,7 +454,7 @@ class TestDriver(SingleCrystalTestDriver):
             fstack.write(InpStr)
 
         # Run the LAMMPS script
-        os.system(LAMMPS_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
+        os.system(lammps_command + " -in " + stack_inp_flnm + " -log " + stack_log_flnm)
 
         # Read the Lammps output file
         with open(stack_data_flnm) as fstack:
@@ -539,13 +472,22 @@ class TestDriver(SingleCrystalTestDriver):
 
         time_sf_fine_end = time.perf_counter()
 
-        # # ------------------------------------------------------------------------------
-        # #                    PRINT FINAL OUTPUTS TO KIM EDN FORMAT
-        # # ------------------------------------------------------------------------------
-
-        # Convert pressure to match relevant KIM Property Definitions
-        CauchyStress = [-Pressure, -Pressure, -Pressure, 0.0, 0.0, 0.0]
-
+        # ------------------------------------------------------------------------------
+        #       Plot stacking energy curve to png and svg using matplotlib
+        # ------------------------------------------------------------------------------
+        plt.figure(1, (8, 6))
+        plt.plot(FracList, SFEDList, "ro", markersize=2)
+        plt.xlim(FracList[0], FracList[-1])
+        plt.grid("on", linestyle="--", alpha=0.5)
+        plt.xlabel(r"$\frac{s\,_{[112]}}{a/\sqrt{6}}$", fontsize=15)
+        plt.ylabel("Stacking fault energy (eV/$\mathrm{\AA}^2$)")  # noqa: W605
+        stackingFaultPlotName = "stacking-fault-relaxed-energy-curve-fcc-" + species + "-" + model + ".svg"
+        plt.savefig(
+            os.path.join(
+                output_dir,
+                stackingFaultPlotName,
+            )
+        )
         # ------------------------------------------------------------------------------
         #         Plot gamma surface to png and svg using matplotlib
         # ------------------------------------------------------------------------------
@@ -578,25 +520,17 @@ class TestDriver(SingleCrystalTestDriver):
             ax_2d.set_ylabel(label110, fontsize=labelfontsize)
             fig.colorbar(projected_gamma_surf, shrink=1, aspect=10, label=energy_label)
             fig.subplots_adjust(bottom=0.1)
-            GammaSurfPlotName = "gamma-surface-relaxed-fcc-" + Species + "-" + Model + "-projected.png"
+            GammaSurfPlotName = "gamma-surface-relaxed-fcc-" + species + "-" + model + "-projected.svg"
             fig.savefig(
                 os.path.join(
                     output_dir,
-                    f"{GammaSurfPlotName}.png",
-                ),
-                bbox_inches="tight",
-                dpi=300,
-            )
-            fig.savefig(
-                os.path.join(
-                    output_dir,
-                    f"{GammaSurfPlotName}.svg",
+                    GammaSurfPlotName,
                 ),
                 bbox_inches="tight",
             )
 
 
-            output_dict = {'CauchyStress': CauchyStress,
+            output_dict = {
                         'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
                         'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
                         'GammaSurf': GammaSurf,
@@ -609,10 +543,11 @@ class TestDriver(SingleCrystalTestDriver):
                         'frac_ut': frac_ut,
                         'FracList': FracList,
                         'SFEDList': SFEDList,
+                        "stackingFaultPlotName": f"{output_dir}/{stackingFaultPlotName}",
                         }
         
         else:
-            output_dict = {'CauchyStress': CauchyStress,
+            output_dict = {
                         'Gamma_X_dir1_frac': Gamma_X_dir1_frac,
                         'Gamma_Y_dir2_frac': Gamma_Y_dir2_frac,
                         'gamma_us': gamma_us,
@@ -623,6 +558,7 @@ class TestDriver(SingleCrystalTestDriver):
                         'frac_ut': frac_ut,
                         'FracList': FracList,
                         'SFEDList': SFEDList,
+                        "stackingFaultPlotName": f"{output_dir}/{stackingFaultPlotName}",
                         }
 
         time_gamma = time_gamma_end - time_gamma_start

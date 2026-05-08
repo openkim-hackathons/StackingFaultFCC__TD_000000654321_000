@@ -11,14 +11,24 @@ from ase.build import bulk
 time_begin = time.perf_counter()
 
 # temporary, for convg study check
-compute_gamma_surf = True
+compute_gamma_surf = False
 
-if False: # atoms object testing
+if True:
+    # atoms object testing
     # default FCC test
-    kim_model_name = 'EAM_Dynamo_ErcolessiAdams_1994_Al__MO_123629422045_005'
-    atoms = bulk('Al','fcc',a=4.032,cubic=True)
+    kim_model_name = 'EAM_Dynamo_WangZhuXiang_2018pot2_Pb__MO_961101070310_001'
+    atoms = bulk('Pb', 'fcc', a=4.989170034100908)
+    # kim_model_name = 'EAM_Dynamo_ErcolessiAdams_1994_Al__MO_123629422045_006'
+    # atoms = bulk('Al','fcc',a=4.032081970847309)
+
     test_driver = TestDriver(kim_model_name)
-    test_driver(atoms, compute_gamma_surf = compute_gamma_surf)
+    # p = 0
+    p = 6.3242091e-07 # 1 atm
+    # p = 0.062
+    # p = 0.131 # should result in 10% compression
+
+    test_driver(atoms, pressure_eV_angstrom3 = p, compute_gamma_surf = compute_gamma_surf)
+    test_driver.write_property_instances_to_file()
 
     time_end = time.perf_counter()  
     print(f"total time = {(time_end - time_begin)/60} mins")
@@ -29,11 +39,11 @@ if False: # atoms object testing
     test_driver = TestDriver(kim_model_name)
     test_driver(atoms)
 
-if True: # kimvv testing
+if False: # kimvv testing
     from kimvv import EquilibriumCrystalStructure
     atoms_init = bulk('Au')
 
-    kim_model_names = ["LennardJones612_UniversalShifted__MO_959249795837_003",
+    kim_model_names = [#"LennardJones612_UniversalShifted__MO_959249795837_003",
                        "Sim_LAMMPS_LJcut_AkersonElliott_Alchemy_PbAu",
                        ]
 
@@ -47,7 +57,8 @@ if True: # kimvv testing
 
         # Run your TD with `relaxed_structure` as the input
         test_driver = TestDriver(kim_model_name)
-        test_driver(relaxed_structure, compute_gamma_surf = compute_gamma_surf)
+        test_driver(relaxed_structure, pressure_eV_angstrom3 = 0.0006, compute_gamma_surf = compute_gamma_surf)
+        test_driver.write_property_instances_to_file()
 
         time_end = time.perf_counter()  
         print(f"total time = {(time_end - time_begin)/60} mins")
