@@ -285,10 +285,6 @@ class TestDriver(SingleCrystalTestDriver):
                         temp_list_at_each_y.append(float(linebuf[2]))
                     GammaSurf.append(temp_list_at_each_y)
 
-            # delete the output file
-            os.system("rm " + stack_data_flnm)
-            os.system("rm " + stack_inp_flnm)
-
         time_gamma_end = time.perf_counter()
 
         # convergence study for SF energies
@@ -354,10 +350,6 @@ class TestDriver(SingleCrystalTestDriver):
                 gamma_isf = SFEDList[size_0 + size_1 - 1]
                 gamma_esf = SFEDList[size_0 + size_1 + size_2 - 1]
 
-            # delete the output file
-            os.system("rm " + stack_data_flnm)
-            os.system("rm " + stack_inp_flnm)
-
             time_sf_rough_end = time.perf_counter()
 
             # Locate the unstable stacking fault energy
@@ -418,10 +410,6 @@ class TestDriver(SingleCrystalTestDriver):
             frac_us = float(linebuf[0])
             gamma_us = float(linebuf[1])
 
-        # delete the output file
-        os.system("rm " + stack_data_flnm)
-        os.system("rm " + stack_inp_flnm)
-
         # ------------------------------------------------------------------------------
         #             Refinement to locate the unstable position - gamma_ut
         # ------------------------------------------------------------------------------
@@ -462,13 +450,6 @@ class TestDriver(SingleCrystalTestDriver):
             linebuf = linelist[1].split()
             frac_ut = float(linebuf[0])
             gamma_ut = float(linebuf[1])
-
-        # delete the output and log files
-        os.system("rm " + stack_data_flnm)
-        os.system("rm " + stack_inp_flnm)
-        os.system("rm " + stack_log_flnm)
-        if os.path.exists("kim.log"):
-            os.system("rm kim.log")
 
         time_sf_fine_end = time.perf_counter()
 
