@@ -126,12 +126,17 @@ def setup_problem(
    variable pyy_metal   equal pyy/${{_u_pressure}}
    variable pzz_metal   equal pzz/${{_u_pressure}}
    variable temp_metal  equal temp/${{_u_temperature}}
+   variable vol_metal equal vol/${{_u_distance}}/${{_u_distance}}/${{_u_distance}}
+   # Lammps does not offer a simple compute command for the enthalpy (as for ke).
+   # Lammps can only include the enthalpy in its thermo output.
+   # Since we want to convert the units of the enthalpy, however, we have to define it ourselves.
+   # In metal units: 1 bar Angstrom^3 = 6.241509074460762e-7 eV
+   variable enthalpy_metal equal "v_pe_metal + v_press_metal * v_vol_metal * 6.241509074460762e-7"
 
    # Compute initial energy and output
    thermo 100
-   thermo_style custom step v_pe_metal press &
-           v_press_metal v_pxx_metal v_pyy_metal v_pzz_metal &
-           temp v_temp_metal
+   thermo_style custom step v_pe_metal v_press_metal v_vol_metal &
+         v_enthalpy_metal v_pxx_metal v_pyy_metal v_pzz_metal press
 
    #dump config all atom 1000 dump_setup.Stack
    #dump_modify config first yes
@@ -156,7 +161,7 @@ def setup_problem(
    variable i delete
    variable k delete
    minimize 1e-25 1e-25 100000 100000
-   variable E equal "v_pe_metal"
+   variable E equal "v_enthalpy_metal"
    variable Eini equal ${{E}} """.format(
         Species=Species,
         ModelName=ModelName,
@@ -202,7 +207,7 @@ def make_stack_twin_test(stack_data_flnm):
       velocity all zero linear
       minimize 1e-25 1e-25 10000 10000
 
-      variable Ecur equal ${{pe_metal}}
+      variable Ecur equal ${{enthalpy_metal}}
       variable SFED equal (${{Ecur}}-${{Eini}})/${{Area}}
       variable totdisp equal ${{i}}/${{n_incr}}
       print "${{totdisp}} ${{SFED}}" append ${{outfile}} screen no
@@ -221,7 +226,7 @@ def make_stack_twin_test(stack_data_flnm):
       velocity all zero linear
       minimize 1e-25 1e-25 10000 10000
 
-      variable Ecur equal ${{pe_metal}}
+      variable Ecur equal ${{enthalpy_metal}}
       variable SFED equal (${{Ecur}}-${{Eini}})/${{Area}}
       variable totdisp equal (1.0+${{i}}/${{n_incr}})
       print "${{totdisp}} ${{SFED}}" append ${{outfile}} screen no
@@ -258,7 +263,7 @@ def make_refine_us(SFrac_us, dFrac_us, stack_data_flnm):
    fix 2 all setforce 0 0 NULL
    minimize 1e-25 1e-25 10000 10000
 
-   variable Ecur equal ${{pe_metal}}
+   variable Ecur equal ${{enthalpy_metal}}
    variable SFEDcur equal (${{Ecur}}-${{Eini}})/${{Area}}
    variable SFEDprev equal ${{SFEDcur}}
    variable Refdisp_us equal ${{disp}}
@@ -277,7 +282,7 @@ def make_refine_us(SFrac_us, dFrac_us, stack_data_flnm):
       min_style cg
       minimize 1e-25 1e-25 10000 10000
 
-      variable Ecur equal ${{pe_metal}}
+      variable Ecur equal ${{enthalpy_metal}}
       variable SFEDcur equal (${{Ecur}}-${{Eini}})/${{Area}}
       variable tmp_d_disp equal ${{d_disp}}
       if "(${{SFEDcur}} < ${{SFEDprev}})" then "variable d_disp equal -0.5*${{tmp_d_disp}}"
@@ -325,7 +330,7 @@ def make_refine_ut(SFrac_ut, dFrac_ut, stack_data_flnm):
    # Relax in z direction
    minimize 1e-25 1e-25 10000 10000
 
-   variable Ecur equal ${{pe_metal}}
+   variable Ecur equal ${{enthalpy_metal}}
    variable SFEDcur equal (${{Ecur}}-${{Eini}})/${{Area}}
    variable SFEDprev equal ${{SFEDcur}}
    variable Refdisp_ut equal ${{twin_move}}+${{disp}}
@@ -343,7 +348,7 @@ def make_refine_ut(SFrac_ut, dFrac_ut, stack_data_flnm):
       # Relax in z direction
       minimize 1e-25 1e-25 10000 10000
 
-      variable Ecur equal ${{pe_metal}}
+      variable Ecur equal ${{enthalpy_metal}}
       variable SFEDcur equal (${{Ecur}}-${{Eini}})/${{Area}}
       variable tmp_d_disp equal ${{d_disp}}
       if "(${{SFEDcur}} < ${{SFEDprev}})" then "variable d_disp equal -0.5*${{tmp_d_disp}}"
@@ -405,7 +410,7 @@ def make_gammasurface_moves(stack_data_flnm, NxPoints, NyPoints):
          # Relax in z direction
          minimize 1e-25 1e-25 10000 10000
 
-         variable Ecur equal ${{pe_metal}}
+         variable Ecur equal ${{enthalpy_metal}}
          variable SFED equal (${{Ecur}}-${{Eini}})/${{Area}}
          variable totdisp_x equal (${{i}}-1)/${{n_incr_x}}
          variable totdisp_y equal (${{j}}-1)/${{n_incr_y}}
